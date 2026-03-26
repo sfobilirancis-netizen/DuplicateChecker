@@ -7,52 +7,46 @@
   </head>
 
   <body>
-    <header>
-      <div>Republic of the Philippines</div>
-      <div>Department of Social Welfare and Development</div>
-      <div>QR Duplicate Checker</div>
-    </header>
+    <div>
+      <label for="lastName">Last Name</label>
+      <input id="lastName" type="text" />
+    </div>
 
-    <main>
-      <div>
-        <label for="lastName">Beneficiary's Last Name</label>
-        <input id="lastName" type="text" placeholder="Enter beneficiary's last name" autocomplete="off" />
-      </div>
+    <div>
+      <label for="firstName">First Name</label>
+      <input id="firstName" type="text" />
+    </div>
 
-      <div>
-        <label for="firstName">Beneficiary's First Name</label>
-        <input id="firstName" type="text" placeholder="Enter beneficiary's first name" autocomplete="off" />
-      </div>
+    <div>
+      <label for="extName">Ext Name</label>
+      <input id="extName" type="text" />
+    </div>
 
-      <div>
-        <label for="extName">Beneficiary's Extension (if any)</label>
-        <input id="extName" type="text" placeholder="e.g. JR / SR / II" autocomplete="off" />
-      </div>
+    <div>
+      <label for="assistanceType">Assistance Type</label>
+      <select id="assistanceType">
+        <option value="" disabled selected>Select</option>
+        <option value="Cash Relief Assistance">Cash Relief Assistance</option>
+        <option value="Medical Assistance">Medical Assistance</option>
+        <option value="Food Assistance">Food Assistance</option>
+        <option value="Funeral Assistance">Funeral Assistance</option>
+        <option value="Transportation Assistance">Transportation Assistance</option>
+        <option value="Educational Assistance">Educational Assistance</option>
+      </select>
+    </div>
 
-      <div>
-        <label for="assistanceType">Type of Assistance</label>
-        <select id="assistanceType">
-          <option value="" disabled selected>Select type of assistance</option>
-          <option value="Cash Relief Assistance">Cash Relief Assistance</option>
-          <option value="Medical Assistance">Medical Assistance</option>
-          <option value="Food Assistance">Food Assistance</option>
-          <option value="Funeral Assistance">Funeral Assistance</option>
-          <option value="Transportation Assistance">Transportation Assistance</option>
-          <option value="Educational Assistance">Educational Assistance</option>
-        </select>
-      </div>
-
-      <button id="scanBtn">Scan QR</button>
-      <button id="checkBtn" style="display: none;">Check Duplicate</button>
-      
-      <div id="status"></div>
-      <div id="qr-reader" style="display: none;"></div>
-    </main>
+    <button id="scanBtn">Scan QR</button>
+    <button id="checkBtn" style="display: none;">Check Duplicate</button>
+    <button id="debugBtn">Debug Data</button>
+    
+    <div id="status"></div>
+    <div id="qr-reader" style="display: none;"></div>
 
     <script>
       const html5QrCode = new Html5Qrcode("qr-reader");
       const scanBtn = document.getElementById("scanBtn");
       const checkBtn = document.getElementById("checkBtn");
+      const debugBtn = document.getElementById("debugBtn");
       const statusDiv = document.getElementById("status");
       const qrReader = document.getElementById("qr-reader");
       
@@ -63,45 +57,76 @@
 
       let isScanning = false;
       let spreadsheetData = [];
-      let isDataLoaded = false;
 
-      // PASTE YOUR GOOGLE SHEETS CSV LINK HERE (Line 72)
-      const GOOGLE_SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pubhtml';
+      // YOUR GOOGLE SHEETS CSV LINK
+      const GOOGLE_SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/YOUR_SHEET_ID/pub?output=csv';
 
       async function loadSpreadsheetData() {
         try {
-          statusDiv.textContent = "Loading LIVE data...";
+          statusDiv.textContent = "Loading...";
           statusDiv.style.display = "block";
           
           const response = await fetch(GOOGLE_SHEETS_CSV);
           const csvText = await response.text();
-          spreadsheetData = parseCSV(csvText);
           
-          statusDiv.textContent = `LIVE: ${spreadsheetData.length} records loaded`;
-          setTimeout(() => statusDiv.style.display = "none", 2000);
-          isDataLoaded = true;
+          // DEBUG: Show first few lines of CSV
+          console.log("CSV Preview:", csvText.split('\n').slice(0, 5));
+          
+          spreadsheetData = parseCSV(csvText);
+          statusDiv.textContent = `Loaded ${spreadsheetData.length} records`;
+          
+          // DEBUG: Show first record
+          console.log("First record:", spreadsheetData[0]);
+          console.log("All data:", spreadsheetData);
+          
+          setTimeout(() => statusDiv.style.display = "none", 3000);
         } catch (error) {
-          console.error('Error:', error);
-          statusDiv.textContent = "Error loading sheet";
-          isDataLoaded = true;
+          statusDiv.textContent = "Error: " + error.message;
+          console.error(error);
         }
       }
 
       function parseCSV(csvText) {
         const lines = csvText.split('\n').filter(line => line.trim());
         const data = [];
+        
         for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(',').map(col => col.trim().replace(/"/g, ''));
+          // Better CSV parsing - handle commas in quotes
+          const cols = parseCSVLine(lines[i]);
+          console.log(`Row ${i}:`, cols);
+          
           if (cols[1] && cols[2]) {
             data.push({
-              lastName: cols[1],      // Column B
-              firstName: cols[2],     // Column C
-              extName: cols[3] || '', // Column D
-              assistanceType: cols[4] || '' // Column E
+              lastName: (cols[1] || '').trim(),
+              firstName: (cols[2] || '').trim(),
+              extName: (cols[3] || '').trim(),
+              assistanceType: (cols[4] || '').trim()
             });
           }
         }
         return data;
+      }
+
+      // Better CSV parser
+      function parseCSVLine(line) {
+        const cols = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            cols.push(current);
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        cols.push(current);
+        return cols;
       }
 
       scanBtn.addEventListener("click", async () => {
@@ -115,11 +140,22 @@
 
       checkBtn.addEventListener("click", checkForDuplicate);
 
+      debugBtn.addEventListener("click", () => {
+        console.log("=== DEBUG INFO ===");
+        console.log("Input values:", {
+          lastName: lastNameInput.value.trim().toUpperCase(),
+          firstName: firstNameInput.value.trim().toUpperCase(),
+          extName: extNameInput.value.trim().toUpperCase(),
+          assistanceType: assistanceTypeInput.value.trim()
+        });
+        console.log("Spreadsheet data sample:", spreadsheetData.slice(0, 3));
+        statusDiv.textContent = `Debug: Check console (F12)`;
+        statusDiv.style.display = "block";
+      });
+
       async function startScanner() {
         try {
           scanBtn.textContent = "Stop Scanner";
-          checkBtn.style.display = "none";
-          statusDiv.style.display = "none";
           qrReader.style.display = "block";
           isScanning = true;
 
@@ -139,6 +175,7 @@
           isScanning = false;
           scanBtn.textContent = "Scan QR";
           qrReader.style.display = "none";
+          checkBtn.style.display = "inline-block";
         });
       }
 
@@ -149,34 +186,57 @@
           lastNameInput.value = data.subject?.lName || "";
           extNameInput.value = data.subject?.Suffix || "";
           stopScanner();
-          checkBtn.style.display = "inline-block";
         } catch (error) {
-          console.error("Invalid QR:", error);
+          console.error("QR Error:", error);
         }
       }
 
       function onScanError() {}
 
       function checkForDuplicate() {
-        const lastName = lastNameInput.value.trim().toUpperCase();
-        const firstName = firstNameInput.value.trim().toUpperCase();
-        const extName = extNameInput.value.trim().toUpperCase();
-        const assistanceType = assistanceTypeInput.value.trim();
+        const search = {
+          lastName: lastNameInput.value.trim().toUpperCase(),
+          firstName: firstNameInput.value.trim().toUpperCase(),
+          extName: extNameInput.value.trim().toUpperCase(),
+          assistanceType: assistanceTypeInput.value.trim()
+        };
 
-        if (!lastName || !firstName || !assistanceType) {
+        console.log("Searching for:", search);
+
+        if (!search.lastName || !search.firstName || !search.assistanceType) {
           statusDiv.textContent = "Fill all fields";
           statusDiv.style.display = "block";
           return;
         }
 
-        const duplicate = spreadsheetData.find(row => 
-          row.lastName.toUpperCase() === lastName &&
-          row.firstName.toUpperCase() === firstName &&
-          row.extName.toUpperCase() === extName &&
-          row.assistanceType === assistanceType
-        );
+        let foundCount = 0;
+        let matches = [];
 
-        statusDiv.textContent = duplicate ? "DUPLICATE" : "No duplicate found";
+        for (let i = 0; i < spreadsheetData.length; i++) {
+          const row = spreadsheetData[i];
+          const match = {
+            lastName: row.lastName.toUpperCase() === search.lastName,
+            firstName: row.firstName.toUpperCase() === search.firstName,
+            extName: row.extName.toUpperCase() === search.extName,
+            assistanceType: row.assistanceType === search.assistanceType
+          };
+
+          if (match.lastName && match.firstName && match.extName && match.assistanceType) {
+            foundCount++;
+            matches.push(row);
+            console.log("MATCH FOUND at row", i, row);
+          }
+        }
+
+        console.log("Total matches:", foundCount, matches);
+
+        if (foundCount > 0) {
+          statusDiv.innerHTML = `DUPLICATE FOUND (${foundCount} matches)<br>Check console for details`;
+          statusDiv.style.color = "red";
+        } else {
+          statusDiv.innerHTML = "No duplicate found<br>Check console for debug info";
+          statusDiv.style.color = "green";
+        }
         statusDiv.style.display = "block";
       }
     </script>
