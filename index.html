@@ -46,9 +46,11 @@
         
         <button type="button" onclick="checkDuplicate()">Check Duplicate</button>
         <button type="button" onclick="resetForm()">Reset</button>
+        <button type="button" onclick="debugData()">Debug Data</button>
       </form>
 
       <div id="message"></div>
+      <div id="debug" style="display: none; background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 12px;"></div>
 
       <div id="results" style="display: none;">
         <h4>Match Results</h4>
@@ -65,26 +67,55 @@
         if (cachedData) return cachedData;
         
         try {
+          console.log('Fetching CSV data...');
           const response = await fetch(SPREADSHEET_URL);
-          const html = await response.text();
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          cachedData = Array.from(doc.querySelectorAll('table tr')).slice(1).map(row => {
-            const cells = row.querySelectorAll('td');
-            return {
-              date: cells[0]?.textContent?.trim() || '',
-              lastName: cells[1]?.textContent?.trim() || '',
-              firstName: cells[2]?.textContent?.trim() || '',
-              extName: cells[3]?.textContent?.trim() || '',
-              assistanceType: cells[4]?.textContent?.trim() || '',
-              rowNumber: row.rowIndex
-            };
-          }).filter(row => row.lastName);
+          const csvText = await response.text();
+          console.log('Raw CSV preview:', csvText.substring(0, 500));
+          
+          cachedData = parseCSV(csvText);
+          console.log('Parsed data:', cachedData.slice(0, 3)); // Log first 3 rows
+          
           return cachedData;
         } catch (error) {
-          console.error('Error fetching data:', error);
+          console.error('Error fetching CSV:', error);
           throw error;
         }
+      }
+
+      function parseCSV(csvText) {
+        const lines = csvText.trim().split('\n').slice(1); // Skip header
+        return lines.map((line, index) => {
+          const cols = parseCSVLine(line);
+          return {
+            date: cols[0]?.trim() || '',
+            lastName: cols[1]?.trim() || '',
+            firstName: cols[2]?.trim() || '',
+            extName: cols[3]?.trim() || '',
+            assistanceType: cols[4]?.trim() || '',
+            rowNumber: index + 2 // +2 because we skipped header and 1-based
+          };
+        }).filter(row => row.lastName && row.lastName.length > 0);
+      }
+
+      function parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.trim());
+        return result;
       }
 
       async function checkDuplicate() {
@@ -95,28 +126,61 @@
         }
 
         setBusy(true);
+        document.getElementById('debug').style.display = 'none';
         showMessage('info', 'Searching...', 'Checking for duplicates...');
 
         try {
           const data = await fetchData();
-          const matches = data.filter(row => 
-            row.lastName.toLowerCase() === payload.lastName.toLowerCase() &&
-            row.firstName.toLowerCase() === payload.firstName.toLowerCase() &&
-            (!payload.extName || row.extName.toLowerCase().includes(payload.extName.toLowerCase())) &&
-            row.assistanceType.toLowerCase() === payload.assistanceType.toLowerCase()
-          );
+          
+          console.log('Search payload:', payload);
+          console.log('Total records:', data.length);
+          
+          const matches = data.filter(row => {
+            const isLastMatch = row.lastName.toLowerCase().trim() === payload.lastName.toLowerCase().trim();
+            const isFirstMatch = row.firstName.toLowerCase().trim() === payload.firstName.toLowerCase().trim();
+            const isTypeMatch = row.assistanceType.toLowerCase().trim() === payload.assistanceType.toLowerCase().trim();
+            
+            console.log(`Row ${row.rowNumber}:`, {
+              last: row.lastName,
+              first: row.firstName,
+              type: row.assistanceType,
+              matches: { last: isLastMatch, first: isFirstMatch, type: isTypeMatch }
+            });
+            
+            return isLastMatch && isFirstMatch && isTypeMatch;
+          });
+
+          console.log('Final matches:', matches);
 
           if (matches.length > 0) {
-            showMessage('ok', 'DUPLICATE FOUND');
+            showMessage('ok', `DUPLICATE FOUND (${matches.length} match${matches.length > 1 ? 'es' : ''})`);
             renderMatches(matches);
           } else {
             showMessage('ok', 'NO DUPLICATE FOUND');
           }
         } catch (error) {
           showMessage('err', 'Error', 'Failed to fetch data from spreadsheet.');
+          console.error(error);
         } finally {
           setBusy(false);
         }
+      }
+
+      function debugData() {
+        fetchData().then(data => {
+          const debugEl = document.getElementById('debug');
+          debugEl.innerHTML = `
+            <strong>Total Records: ${data.length}</strong><br>
+            <strong>First 5 records:</strong><br>
+            ${data.slice(0, 5).map((row, i) => 
+              `Row ${row.rowNumber}: ${row.lastName} ${row.firstName} ${row.extName} | ${row.assistanceType}`
+            ).join('<br>')}
+          `;
+          debugEl.style.display = 'block';
+        }).catch(err => {
+          document.getElementById('debug').innerHTML = 'Error loading data: ' + err.message;
+          document.getElementById('debug').style.display = 'block';
+        });
       }
 
       function getPayload() {
@@ -143,7 +207,7 @@
         
         const color = type === 'err' ? 'red' : type === 'ok' ? 'green' : 'blue';
         const bgColor = type === 'err' ? '#fee' : type === 'ok' ? '#efe' : '#eef';
-        el.innerHTML = `<div style="padding: 15px; margin: 15px 0; border: 2px solid ${color}; background: ${bgColor}; font-size: 18px; font-weight: bold; text-align: center;">
+        el.innerHTML = `<div style="padding: 15px; margin: 15px 0; border: 3px solid ${color}; background: ${bgColor}; font-size: 20px; font-weight: bold; text-align: center;">
           ${escapeHtml(title)}
           ${detail ? `<br><small style="font-size: 14px; font-weight: normal;">${escapeHtml(detail)}</small>` : ''}
         </div>`;
@@ -155,7 +219,7 @@
         let html = `
           <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
             <thead>
-              <tr style="background: #0038A8; color: white;">
+              <tr style="background: #dc3545; color: white;">
                 <th style="padding: 12px;">Date</th>
                 <th style="padding: 12px;">Last Name</th>
                 <th style="padding: 12px;">First Name</th>
@@ -175,7 +239,7 @@
               <td style="padding: 10px; font-weight: bold; color: red;">${escapeHtml(m.firstName)}</td>
               <td style="padding: 10px;">${escapeHtml(m.extName)}</td>
               <td style="padding: 10px; background: #ffe6e6; font-weight: bold;">${escapeHtml(m.assistanceType)}</td>
-              <td style="padding: 10px; font-weight: bold;">${escapeHtml(m.rowNumber)}</td>
+              <td style="padding: 10px; font-weight: bold; color: red;">${escapeHtml(m.rowNumber)}</td>
             </tr>
           `;
         });
@@ -188,8 +252,9 @@
         document.getElementById('searchForm').reset();
         document.getElementById('message').innerHTML = '';
         document.getElementById('results').style.display = 'none';
+        document.getElementById('debug').style.display = 'none';
         document.querySelector('button[onclick="checkDuplicate()"]').textContent = 'Check Duplicate';
-        cachedData = null; // Clear cache on reset
+        cachedData = null;
       }
 
       function escapeHtml(text) {
