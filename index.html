@@ -36,12 +36,12 @@
     </div>
 
     <button id="scanBtn">Scan QR</button>
-    <div id="status"></div>
+    <div id="qr-reader" style="display: none;"></div>
 
     <script>
         const html5QrCode = new Html5Qrcode("qr-reader");
         const scanBtn = document.getElementById("scanBtn");
-        const statusDiv = document.getElementById("status");
+        const qrReader = document.getElementById("qr-reader");
         
         // Input elements
         const firstNameInput = document.getElementById("firstName");
@@ -60,14 +60,8 @@
 
         async function startScanner() {
             try {
-                // Create QR reader div dynamically
-                const qrReader = document.createElement("div");
-                qrReader.id = "qr-reader";
-                document.body.appendChild(qrReader);
-
                 scanBtn.textContent = "Stop Scanner";
-                statusDiv.textContent = "Scanning...";
-                statusDiv.style.display = "block";
+                qrReader.style.display = "block";
 
                 isScanning = true;
 
@@ -78,7 +72,7 @@
                     onScanError
                 );
             } catch (err) {
-                statusDiv.textContent = "Error: " + err;
+                console.error("Scanner error:", err);
             }
         }
 
@@ -86,13 +80,7 @@
             html5QrCode.stop().then(() => {
                 isScanning = false;
                 scanBtn.textContent = "Scan QR";
-                statusDiv.style.display = "none";
-                
-                // Remove QR reader div
-                const qrReader = document.getElementById("qr-reader");
-                if (qrReader) {
-                    qrReader.remove();
-                }
+                qrReader.style.display = "none";
             });
         }
 
@@ -100,18 +88,16 @@
             try {
                 const data = JSON.parse(decodedText);
                 
-                // ONLY auto-populate the input fields, no result div
+                // Auto-populate the input fields only
                 firstNameInput.value = data.subject?.fName || "";
                 lastNameInput.value = data.subject?.lName || "";
                 extNameInput.value = data.subject?.Suffix || "";
                 
+                // Automatically stop scanning after successful scan
                 stopScanner();
-                statusDiv.textContent = "QR scanned successfully!";
-                statusDiv.style.color = "green";
                 
             } catch (error) {
-                statusDiv.textContent = "Invalid QR data";
-                statusDiv.style.color = "red";
+                console.error("Invalid QR data:", error);
             }
         }
 
