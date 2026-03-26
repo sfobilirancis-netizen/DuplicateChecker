@@ -37,17 +37,11 @@
 
     <button id="scanBtn">Scan QR</button>
     <div id="status"></div>
-    <div id="result" style="display: none;">
-        <div id="fullName"></div>
-        <button onclick="closeResult()">Scan Another</button>
-    </div>
 
     <script>
         const html5QrCode = new Html5Qrcode("qr-reader");
         const scanBtn = document.getElementById("scanBtn");
         const statusDiv = document.getElementById("status");
-        const resultDiv = document.getElementById("result");
-        const fullNameDiv = document.getElementById("fullName");
         
         // Input elements
         const firstNameInput = document.getElementById("firstName");
@@ -74,7 +68,6 @@
                 scanBtn.textContent = "Stop Scanner";
                 statusDiv.textContent = "Scanning...";
                 statusDiv.style.display = "block";
-                resultDiv.style.display = "none";
 
                 isScanning = true;
 
@@ -107,34 +100,23 @@
             try {
                 const data = JSON.parse(decodedText);
                 
-                // Auto-populate the input fields
+                // ONLY auto-populate the input fields, no result div
                 firstNameInput.value = data.subject?.fName || "";
                 lastNameInput.value = data.subject?.lName || "";
                 extNameInput.value = data.subject?.Suffix || "";
                 
-                // Show result
-                const suffix = data.subject?.Suffix || "";
-                const lName = data.subject?.lName || "N/A";
-                const fName = data.subject?.fName || "N/A";
-                
-                const fullName = `${fName} ${suffix} ${lName}`.trim();
-                fullNameDiv.textContent = fullName;
-                
                 stopScanner();
-                resultDiv.style.display = "block";
+                statusDiv.textContent = "QR scanned successfully!";
+                statusDiv.style.color = "green";
                 
             } catch (error) {
                 statusDiv.textContent = "Invalid QR data";
+                statusDiv.style.color = "red";
             }
         }
 
         function onScanError(error) {
             // Silent for continuous scan
-        }
-
-        function closeResult() {
-            resultDiv.style.display = "none";
-            startScanner();
         }
     </script>
 </body>
