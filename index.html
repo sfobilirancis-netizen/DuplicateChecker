@@ -46,11 +46,11 @@
         
         <button type="button" onclick="checkDuplicate()">Check Duplicate</button>
         <button type="button" onclick="resetForm()">Reset</button>
-        <button type="button" onclick="debugData()">Debug Data</button>
+        <button type="button" onclick="testConnection()">Test Connection</button>
       </form>
 
       <div id="message"></div>
-      <div id="debug" style="display: none; background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 12px;"></div>
+      <div id="debug" style="display: none; background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 12px; max-height: 300px; overflow: auto;"></div>
 
       <div id="results" style="display: none;">
         <h4>Match Results</h4>
@@ -59,27 +59,83 @@
     </main>
 
     <script>
-      const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv';
+      // Try both URLs
+      const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv';
+      const HTML_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pubhtml';
       
       let cachedData = null;
+
+      async function testConnection() {
+        showMessage('info', 'Testing connections...');
+        document.getElementById('debug').style.display = 'none';
+        
+        try {
+          // Test CSV
+          const csvResponse = await fetch(CSV_URL);
+          const csvStatus = csvResponse.ok ? `✅ CSV OK (${csvResponse.status})` : `❌ CSV Failed (${csvResponse.status})`;
+          
+          // Test HTML
+          const htmlResponse = await fetch(HTML_URL);
+          const htmlStatus = htmlResponse.ok ? `✅ HTML OK (${htmlResponse.status})` : `❌ HTML Failed (${htmlResponse.status})`;
+          
+          document.getElementById('debug').innerHTML = `
+            <strong>Connection Test Results:</strong><br>
+            ${csvStatus}<br>
+            ${htmlStatus}
+          `;
+          document.getElementById('debug').style.display = 'block';
+          
+        } catch (error) {
+          document.getElementById('debug').innerHTML = `Network error: ${error.message}`;
+          document.getElementById('debug').style.display = 'block';
+        }
+      }
 
       async function fetchData() {
         if (cachedData) return cachedData;
         
+        // Try CSV first
         try {
-          console.log('Fetching CSV data...');
-          const response = await fetch(SPREADSHEET_URL);
-          const csvText = await response.text();
-          console.log('Raw CSV preview:', csvText.substring(0, 500));
-          
-          cachedData = parseCSV(csvText);
-          console.log('Parsed data:', cachedData.slice(0, 3)); // Log first 3 rows
-          
-          return cachedData;
-        } catch (error) {
-          console.error('Error fetching CSV:', error);
-          throw error;
+          console.log('Trying CSV format...');
+          const response = await fetch(CSV_URL);
+          if (response.ok) {
+            const csvText = await response.text();
+            cachedData = parseCSV(csvText);
+            console.log(`CSV Success: ${cachedData.length} records`);
+            return cachedData;
+          }
+        } catch (csvError) {
+          console.log('CSV failed, trying HTML...');
         }
+        
+        // Fallback to HTML
+        try {
+          console.log('Trying HTML format...');
+          const response = await fetch(HTML_URL);
+          const html = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const tables = doc.querySelectorAll('table');
+          if (tables.length > 0) {
+            cachedData = Array.from(tables[0].querySelectorAll('tr')).slice(1).map((row, index) => {
+              const cells = row.querySelectorAll('td');
+              return {
+                date: cells[0]?.textContent?.trim() || '',
+                lastName: cells[1]?.textContent?.trim() || '',
+                firstName: cells[2]?.textContent?.trim() || '',
+                extName: cells[3]?.textContent?.trim() || '',
+                assistanceType: cells[4]?.textContent?.trim() || '',
+                rowNumber: index + 2
+              };
+            }).filter(row => row.lastName);
+            console.log(`HTML Success: ${cachedData.length} records`);
+            return cachedData;
+          }
+        } catch (htmlError) {
+          console.error('Both formats failed:', htmlError);
+        }
+        
+        throw new Error('Both CSV and HTML formats failed to load');
       }
 
       function parseCSV(csvText) {
@@ -92,7 +148,7 @@
             firstName: cols[2]?.trim() || '',
             extName: cols[3]?.trim() || '',
             assistanceType: cols[4]?.trim() || '',
-            rowNumber: index + 2 // +2 because we skipped header and 1-based
+            rowNumber: index + 2
           };
         }).filter(row => row.lastName && row.lastName.length > 0);
       }
@@ -132,25 +188,22 @@
         try {
           const data = await fetchData();
           
-          console.log('Search payload:', payload);
-          console.log('Total records:', data.length);
+          console.log('🔍 Search payload:', payload);
+          console.log('📊 Total records:', data.length);
           
           const matches = data.filter(row => {
             const isLastMatch = row.lastName.toLowerCase().trim() === payload.lastName.toLowerCase().trim();
             const isFirstMatch = row.firstName.toLowerCase().trim() === payload.firstName.toLowerCase().trim();
             const isTypeMatch = row.assistanceType.toLowerCase().trim() === payload.assistanceType.toLowerCase().trim();
             
-            console.log(`Row ${row.rowNumber}:`, {
-              last: row.lastName,
-              first: row.firstName,
-              type: row.assistanceType,
-              matches: { last: isLastMatch, first: isFirstMatch, type: isTypeMatch }
-            });
+            if (isLastMatch && isFirstMatch && isTypeMatch) {
+              console.log('✅ MATCH FOUND:', row);
+            }
             
             return isLastMatch && isFirstMatch && isTypeMatch;
           });
 
-          console.log('Final matches:', matches);
+          console.log('🎯 Final matches:', matches.length);
 
           if (matches.length > 0) {
             showMessage('ok', `DUPLICATE FOUND (${matches.length} match${matches.length > 1 ? 'es' : ''})`);
@@ -159,28 +212,11 @@
             showMessage('ok', 'NO DUPLICATE FOUND');
           }
         } catch (error) {
-          showMessage('err', 'Error', 'Failed to fetch data from spreadsheet.');
-          console.error(error);
+          showMessage('err', `Error: ${error.message}`);
+          console.error('Full error:', error);
         } finally {
           setBusy(false);
         }
-      }
-
-      function debugData() {
-        fetchData().then(data => {
-          const debugEl = document.getElementById('debug');
-          debugEl.innerHTML = `
-            <strong>Total Records: ${data.length}</strong><br>
-            <strong>First 5 records:</strong><br>
-            ${data.slice(0, 5).map((row, i) => 
-              `Row ${row.rowNumber}: ${row.lastName} ${row.firstName} ${row.extName} | ${row.assistanceType}`
-            ).join('<br>')}
-          `;
-          debugEl.style.display = 'block';
-        }).catch(err => {
-          document.getElementById('debug').innerHTML = 'Error loading data: ' + err.message;
-          document.getElementById('debug').style.display = 'block';
-        });
       }
 
       function getPayload() {
@@ -200,50 +236,33 @@
 
       function showMessage(type, title, detail = '') {
         const el = document.getElementById("message");
-        if (!title) {
-          el.innerHTML = '';
-          return;
-        }
-        
         const color = type === 'err' ? 'red' : type === 'ok' ? 'green' : 'blue';
         const bgColor = type === 'err' ? '#fee' : type === 'ok' ? '#efe' : '#eef';
         el.innerHTML = `<div style="padding: 15px; margin: 15px 0; border: 3px solid ${color}; background: ${bgColor}; font-size: 20px; font-weight: bold; text-align: center;">
           ${escapeHtml(title)}
-          ${detail ? `<br><small style="font-size: 14px; font-weight: normal;">${escapeHtml(detail)}</small>` : ''}
+          ${detail ? `<br><small style="font-size: 14px;">${escapeHtml(detail)}</small>` : ''}
         </div>`;
       }
 
       function renderMatches(matches) {
         document.getElementById('results').style.display = 'block';
-
         let html = `
           <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-            <thead>
-              <tr style="background: #dc3545; color: white;">
-                <th style="padding: 12px;">Date</th>
-                <th style="padding: 12px;">Last Name</th>
-                <th style="padding: 12px;">First Name</th>
-                <th style="padding: 12px;">Ext</th>
-                <th style="padding: 12px;">Type</th>
-                <th style="padding: 12px;">Row #</th>
-              </tr>
-            </thead>
-            <tbody>
+            <thead><tr style="background: #dc3545; color: white;">
+              <th style="padding: 12px;">Date</th><th style="padding: 12px;">Last</th><th style="padding: 12px;">First</th>
+              <th style="padding: 12px;">Ext</th><th style="padding: 12px;">Type</th><th style="padding: 12px;">Row</th>
+            </tr></thead><tbody>
         `;
-
         matches.forEach(m => {
-          html += `
-            <tr style="background: #fff3cd;">
-              <td style="padding: 10px;">${escapeHtml(m.date)}</td>
-              <td style="padding: 10px; font-weight: bold; color: red;">${escapeHtml(m.lastName)}</td>
-              <td style="padding: 10px; font-weight: bold; color: red;">${escapeHtml(m.firstName)}</td>
-              <td style="padding: 10px;">${escapeHtml(m.extName)}</td>
-              <td style="padding: 10px; background: #ffe6e6; font-weight: bold;">${escapeHtml(m.assistanceType)}</td>
-              <td style="padding: 10px; font-weight: bold; color: red;">${escapeHtml(m.rowNumber)}</td>
-            </tr>
-          `;
+          html += `<tr style="background: #fff3cd;">
+            <td style="padding: 10px;">${escapeHtml(m.date)}</td>
+            <td style="padding: 10px;font-weight:bold;color:red;">${escapeHtml(m.lastName)}</td>
+            <td style="padding: 10px;font-weight:bold;color:red;">${escapeHtml(m.firstName)}</td>
+            <td style="padding: 10px;">${escapeHtml(m.extName)}</td>
+            <td style="padding: 10px;background:#ffe6e6;font-weight:bold;">${escapeHtml(m.assistanceType)}</td>
+            <td style="padding: 10px;font-weight:bold;color:red;">${m.rowNumber}</td>
+          </tr>`;
         });
-
         html += '</tbody></table>';
         document.getElementById('resultsTable').innerHTML = html;
       }
@@ -258,17 +277,10 @@
       }
 
       function escapeHtml(text) {
-        const map = {
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#039;'
-        };
+        const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#039;'};
         return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
       }
 
-      // Enter key support
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
           e.preventDefault();
