@@ -37,7 +37,6 @@
 
     <button id="scanBtn">Scan QR</button>
     <div id="status"></div>
-    <div id="qr-reader" style="display: none;"></div>
     <div id="result" style="display: none;">
         <div id="fullName"></div>
         <button onclick="closeResult()">Scan Another</button>
@@ -47,7 +46,6 @@
         const html5QrCode = new Html5Qrcode("qr-reader");
         const scanBtn = document.getElementById("scanBtn");
         const statusDiv = document.getElementById("status");
-        const qrReader = document.getElementById("qr-reader");
         const resultDiv = document.getElementById("result");
         const fullNameDiv = document.getElementById("fullName");
         
@@ -68,8 +66,12 @@
 
         async function startScanner() {
             try {
+                // Create QR reader div dynamically
+                const qrReader = document.createElement("div");
+                qrReader.id = "qr-reader";
+                document.body.appendChild(qrReader);
+
                 scanBtn.textContent = "Stop Scanner";
-                qrReader.style.display = "block";
                 statusDiv.textContent = "Scanning...";
                 statusDiv.style.display = "block";
                 resultDiv.style.display = "none";
@@ -91,8 +93,13 @@
             html5QrCode.stop().then(() => {
                 isScanning = false;
                 scanBtn.textContent = "Scan QR";
-                qrReader.style.display = "none";
                 statusDiv.style.display = "none";
+                
+                // Remove QR reader div
+                const qrReader = document.getElementById("qr-reader");
+                if (qrReader) {
+                    qrReader.remove();
+                }
             });
         }
 
@@ -100,7 +107,7 @@
             try {
                 const data = JSON.parse(decodedText);
                 
-                // Auto-populate the input fields (mapping QR fields to form fields)
+                // Auto-populate the input fields
                 firstNameInput.value = data.subject?.fName || "";
                 lastNameInput.value = data.subject?.lName || "";
                 extNameInput.value = data.subject?.Suffix || "";
