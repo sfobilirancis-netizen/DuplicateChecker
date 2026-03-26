@@ -35,15 +35,18 @@
       </select>
     </div>
 
+    <!-- SEPARATE BUTTONS -->
+    <button id="loadDataBtn">Load Data</button>
     <button id="scanBtn">Scan QR</button>
-    <button id="checkBtn" style="display: none;">Check Duplicate</button>
-    <button id="debugBtn">Debug Data</button>
+    <button id="checkBtn">Check Duplicate</button>
+    <button id="debugBtn">Debug</button>
     
     <div id="status"></div>
     <div id="qr-reader" style="display: none;"></div>
 
     <script>
       const html5QrCode = new Html5Qrcode("qr-reader");
+      const loadDataBtn = document.getElementById("loadDataBtn");
       const scanBtn = document.getElementById("scanBtn");
       const checkBtn = document.getElementById("checkBtn");
       const debugBtn = document.getElementById("debugBtn");
@@ -57,31 +60,51 @@
 
       let isScanning = false;
       let spreadsheetData = [];
+      let isDataLoaded = false;
 
       // YOUR GOOGLE SHEETS CSV LINK
-      const GOOGLE_SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/YOUR_SHEET_ID/pub?output=csv';
+      const GOOGLE_SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pubhtml';
+
+      // 1. LOAD DATA BUTTON - Always available
+      loadDataBtn.addEventListener("click", loadSpreadsheetData);
+
+      // 2. SCAN QR BUTTON - Always available  
+      scanBtn.addEventListener("click", async () => {
+        if (!isDataLoaded) {
+          statusDiv.textContent = "Load data first!";
+          statusDiv.style.display = "block";
+          return;
+        }
+        if (isScanning) {
+          stopScanner();
+        } else {
+          startScanner();
+        }
+      });
+
+      // 3. CHECK DUPLICATE - Always available
+      checkBtn.addEventListener("click", checkForDuplicate);
+
+      // 4. DEBUG BUTTON
+      debugBtn.addEventListener("click", showDebug);
 
       async function loadSpreadsheetData() {
         try {
-          statusDiv.textContent = "Loading...";
+          statusDiv.textContent = "Loading LIVE data...";
           statusDiv.style.display = "block";
           
           const response = await fetch(GOOGLE_SHEETS_CSV);
           const csvText = await response.text();
           
-          // DEBUG: Show first few lines of CSV
-          console.log("CSV Preview:", csvText.split('\n').slice(0, 5));
-          
           spreadsheetData = parseCSV(csvText);
-          statusDiv.textContent = `Loaded ${spreadsheetData.length} records`;
+          statusDiv.textContent = `✅ Loaded ${spreadsheetData.length} records`;
           
-          // DEBUG: Show first record
-          console.log("First record:", spreadsheetData[0]);
-          console.log("All data:", spreadsheetData);
+          console.log("Data loaded:", spreadsheetData.slice(0, 3));
+          isDataLoaded = true;
           
-          setTimeout(() => statusDiv.style.display = "none", 3000);
+          setTimeout(() => statusDiv.style.display = "none", 2000);
         } catch (error) {
-          statusDiv.textContent = "Error: " + error.message;
+          statusDiv.textContent = "❌ Error: " + error.message;
           console.error(error);
         }
       }
@@ -91,10 +114,7 @@
         const data = [];
         
         for (let i = 1; i < lines.length; i++) {
-          // Better CSV parsing - handle commas in quotes
           const cols = parseCSVLine(lines[i]);
-          console.log(`Row ${i}:`, cols);
-          
           if (cols[1] && cols[2]) {
             data.push({
               lastName: (cols[1] || '').trim(),
@@ -107,7 +127,6 @@
         return data;
       }
 
-      // Better CSV parser
       function parseCSVLine(line) {
         const cols = [];
         let current = '';
@@ -115,7 +134,6 @@
         
         for (let i = 0; i < line.length; i++) {
           const char = line[i];
-          
           if (char === '"') {
             inQuotes = !inQuotes;
           } else if (char === ',' && !inQuotes) {
@@ -129,30 +147,6 @@
         return cols;
       }
 
-      scanBtn.addEventListener("click", async () => {
-        if (isScanning) {
-          stopScanner();
-        } else {
-          await loadSpreadsheetData();
-          startScanner();
-        }
-      });
-
-      checkBtn.addEventListener("click", checkForDuplicate);
-
-      debugBtn.addEventListener("click", () => {
-        console.log("=== DEBUG INFO ===");
-        console.log("Input values:", {
-          lastName: lastNameInput.value.trim().toUpperCase(),
-          firstName: firstNameInput.value.trim().toUpperCase(),
-          extName: extNameInput.value.trim().toUpperCase(),
-          assistanceType: assistanceTypeInput.value.trim()
-        });
-        console.log("Spreadsheet data sample:", spreadsheetData.slice(0, 3));
-        statusDiv.textContent = `Debug: Check console (F12)`;
-        statusDiv.style.display = "block";
-      });
-
       async function startScanner() {
         try {
           scanBtn.textContent = "Stop Scanner";
@@ -163,7 +157,7 @@
             { facingMode: "environment" },
             { fps: 10, qrbox: { width: 250, height: 250 } },
             onScanSuccess,
-            onScanError
+            () => {}
           );
         } catch (err) {
           console.error(err);
@@ -175,7 +169,6 @@
           isScanning = false;
           scanBtn.textContent = "Scan QR";
           qrReader.style.display = "none";
-          checkBtn.style.display = "inline-block";
         });
       }
 
@@ -186,12 +179,12 @@
           lastNameInput.value = data.subject?.lName || "";
           extNameInput.value = data.subject?.Suffix || "";
           stopScanner();
+          statusDiv.textContent = "QR scanned! Fill assistance type and check duplicate.";
+          statusDiv.style.display = "block";
         } catch (error) {
           console.error("QR Error:", error);
         }
       }
-
-      function onScanError() {}
 
       function checkForDuplicate() {
         const search = {
@@ -201,42 +194,49 @@
           assistanceType: assistanceTypeInput.value.trim()
         };
 
-        console.log("Searching for:", search);
+        if (!isDataLoaded) {
+          statusDiv.textContent = "Load data first!";
+          statusDiv.style.display = "block";
+          return;
+        }
 
         if (!search.lastName || !search.firstName || !search.assistanceType) {
-          statusDiv.textContent = "Fill all fields";
+          statusDiv.textContent = "Fill all 4 fields!";
           statusDiv.style.display = "block";
           return;
         }
 
         let foundCount = 0;
-        let matches = [];
-
-        for (let i = 0; i < spreadsheetData.length; i++) {
-          const row = spreadsheetData[i];
-          const match = {
-            lastName: row.lastName.toUpperCase() === search.lastName,
-            firstName: row.firstName.toUpperCase() === search.firstName,
-            extName: row.extName.toUpperCase() === search.extName,
-            assistanceType: row.assistanceType === search.assistanceType
-          };
-
-          if (match.lastName && match.firstName && match.extName && match.assistanceType) {
+        
+        for (let row of spreadsheetData) {
+          if (row.lastName.toUpperCase() === search.lastName &&
+              row.firstName.toUpperCase() === search.firstName &&
+              row.extName.toUpperCase() === search.extName &&
+              row.assistanceType === search.assistanceType) {
             foundCount++;
-            matches.push(row);
-            console.log("MATCH FOUND at row", i, row);
           }
         }
 
-        console.log("Total matches:", foundCount, matches);
-
         if (foundCount > 0) {
-          statusDiv.innerHTML = `DUPLICATE FOUND (${foundCount} matches)<br>Check console for details`;
-          statusDiv.style.color = "red";
+          statusDiv.innerHTML = `<strong style="color:red">DUPLICATE (${foundCount})</strong>`;
         } else {
-          statusDiv.innerHTML = "No duplicate found<br>Check console for debug info";
-          statusDiv.style.color = "green";
+          statusDiv.innerHTML = `<strong style="color:green">No duplicate found</strong>`;
         }
+        statusDiv.style.display = "block";
+      }
+
+      function showDebug() {
+        console.log("=== DEBUG ===");
+        console.log("Data loaded:", isDataLoaded);
+        console.log("Total records:", spreadsheetData.length);
+        console.log("Sample data:", spreadsheetData.slice(0, 3));
+        console.log("Search values:", {
+          lastName: lastNameInput.value.trim(),
+          firstName: firstNameInput.value.trim(),
+          extName: extNameInput.value.trim(),
+          assistanceType: assistanceTypeInput.value.trim()
+        });
+        statusDiv.textContent = "Check console (F12)";
         statusDiv.style.display = "block";
       }
     </script>
