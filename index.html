@@ -4,6 +4,7 @@
     <base target="_top" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Duplicate Checker</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   </head>
 
   <body>
@@ -47,8 +48,14 @@
         <button type="button" onclick="checkDuplicate()">Check Duplicate</button>
         <button type="button" onclick="resetForm()">Reset</button>
         <button type="button" onclick="testConnection()">Test Connection</button>
-        <button type="button" onclick="scanQR()">Scan QR</button>
+        <button type="button" onclick="startQRScan()">Scan QR</button>
+        <button type="button" onclick="stopQRScan()" id="stopScanBtn" style="display:none;">Stop Scan</button>
       </form>
+
+      <div id="qrScanner" style="display:none; margin: 20px 0;">
+        <video id="qr-video" style="max-width: 100%;"></video>
+        <div id="qr-status"></div>
+      </div>
 
       <div id="message"></div>
       <div id="debug" style="display: none; background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 12px; max-height: 300px; overflow: auto;"></div>
@@ -65,17 +72,16 @@
       const HTML_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pubhtml';
       
       let cachedData = null;
+      let html5QrCode = null;
 
       async function testConnection() {
         showMessage('info', 'Testing connections...');
         document.getElementById('debug').style.display = 'none';
         
         try {
-          // Test CSV
           const csvResponse = await fetch(CSV_URL);
           const csvStatus = csvResponse.ok ? `✅ CSV OK (${csvResponse.status})` : `❌ CSV Failed (${csvResponse.status})`;
           
-          // Test HTML
           const htmlResponse = await fetch(HTML_URL);
           const htmlStatus = htmlResponse.ok ? `✅ HTML OK (${htmlResponse.status})` : `❌ HTML Failed (${htmlResponse.status})`;
           
@@ -92,40 +98,76 @@
         }
       }
 
-      function scanQR() {
-        let qrData = prompt('Scan QR Code and paste the JSON data here:');
-        if (!qrData) {
-          showMessage('info', 'No QR data provided');
-          return;
-        }
-
+      async function startQRScan() {
         try {
-          // Parse the JSON data
-          const parsedData = JSON.parse(qrData);
+          document.getElementById('stopScanBtn').style.display = 'inline-block';
+          document.getElementById('qrScanner').style.display = 'block';
           
-          // Extract beneficiary info
+          html5QrCode = new Html5Qrcode("qrScanner");
+          
+          const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+          
+          await html5QrCode.start(
+            { facingMode: "environment" }, // Back camera
+            (decodedText) => {
+              stopQRScan();
+              processQRData(decodedText);
+            },
+            (error) => {
+              // Ignore scan errors
+            },
+            config
+          );
+          
+          updateQRStatus('Scanning for QR code... Point camera at QR');
+          
+        } catch (error) {
+          showMessage('err', 'QR Scanner Error', 'Camera access denied or not available');
+          console.error('QR Scan error:', error);
+        }
+      }
+
+      function stopQRScan() {
+        if (html5QrCode) {
+          html5QrCode.stop().then(() => {
+            html5QrCode = null;
+            document.getElementById('stopScanBtn').style.display = 'none';
+            document.getElementById('qrScanner').style.display = 'none';
+            document.getElementById('qr-status').innerHTML = '';
+          }).catch(err => console.error('Stop QR error:', err));
+        }
+      }
+
+      function processQRData(qrData) {
+        try {
+          updateQRStatus('Processing QR data...');
+          const parsedData = JSON.parse(qrData);
           const subject = parsedData.subject || {};
           
-          // Populate the form fields
+          // Auto-populate fields
           document.getElementById('lastName').value = subject.lName || '';
           document.getElementById('firstName').value = subject.fName || '';
           document.getElementById('extName').value = subject.Suffix || '';
           
-          showMessage('ok', 'QR Data Loaded Successfully!', 
-            `Last: ${subject.lName || 'N/A'}, First: ${subject.fName || 'N/A'}, Suffix: ${subject.Suffix || 'N/A'}`);
+          showMessage('ok', 'QR Scanned Successfully!', 
+            `Last: ${subject.lName || 'N/A'} | First: ${subject.fName || 'N/A'} | Suffix: ${subject.Suffix || 'N/A'}`);
           
-          console.log('QR Data parsed:', parsedData);
+          console.log('QR Data:', parsedData);
           
         } catch (error) {
-          showMessage('err', 'Invalid QR Data Format', 'Please paste valid JSON data from QR code');
-          console.error('QR Parse error:', error);
+          showMessage('err', 'Invalid QR Data', 'QR contains invalid JSON format');
+          console.error('QR Parse error:', error, qrData);
         }
       }
 
+      function updateQRStatus(message) {
+        document.getElementById('qr-status').innerHTML = `<div style="margin-top:10px;padding:10px;background:#e3f2fd;border-radius:5px;">${message}</div>`;
+      }
+
+      // Rest of your existing functions remain the same...
       async function fetchData() {
         if (cachedData) return cachedData;
         
-        // Try CSV first
         try {
           console.log('Trying CSV format...');
           const response = await fetch(CSV_URL);
@@ -139,7 +181,6 @@
           console.log('CSV failed, trying HTML...');
         }
         
-        // Fallback to HTML
         try {
           console.log('Trying HTML format...');
           const response = await fetch(HTML_URL);
@@ -170,7 +211,7 @@
       }
 
       function parseCSV(csvText) {
-        const lines = csvText.trim().split('\n').slice(1); // Skip header
+        const lines = csvText.trim().split('\n').slice(1);
         return lines.map((line, index) => {
           const cols = parseCSVLine(line);
           return {
@@ -227,14 +268,8 @@
             const isFirstMatch = row.firstName.toLowerCase().trim() === payload.firstName.toLowerCase().trim();
             const isTypeMatch = row.assistanceType.toLowerCase().trim() === payload.assistanceType.toLowerCase().trim();
             
-            if (isLastMatch && isFirstMatch && isTypeMatch) {
-              console.log('✅ MATCH FOUND:', row);
-            }
-            
             return isLastMatch && isFirstMatch && isTypeMatch;
           });
-
-          console.log('🎯 Final matches:', matches.length);
 
           if (matches.length > 0) {
             showMessage('ok', `DUPLICATE FOUND (${matches.length} match${matches.length > 1 ? 'es' : ''})`);
@@ -244,7 +279,6 @@
           }
         } catch (error) {
           showMessage('err', `Error: ${error.message}`);
-          console.error('Full error:', error);
         } finally {
           setBusy(false);
         }
@@ -303,6 +337,7 @@
         document.getElementById('message').innerHTML = '';
         document.getElementById('results').style.display = 'none';
         document.getElementById('debug').style.display = 'none';
+        stopQRScan();
         document.querySelector('button[onclick="checkDuplicate()"]').textContent = 'Check Duplicate';
         cachedData = null;
       }
