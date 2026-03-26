@@ -47,6 +47,7 @@
         <button type="button" onclick="checkDuplicate()">Check Duplicate</button>
         <button type="button" onclick="resetForm()">Reset</button>
         <button type="button" onclick="testConnection()">Test Connection</button>
+        <button type="button" onclick="scanQR()">Scan QR</button>
       </form>
 
       <div id="message"></div>
@@ -88,6 +89,36 @@
         } catch (error) {
           document.getElementById('debug').innerHTML = `Network error: ${error.message}`;
           document.getElementById('debug').style.display = 'block';
+        }
+      }
+
+      function scanQR() {
+        let qrData = prompt('Scan QR Code and paste the JSON data here:');
+        if (!qrData) {
+          showMessage('info', 'No QR data provided');
+          return;
+        }
+
+        try {
+          // Parse the JSON data
+          const parsedData = JSON.parse(qrData);
+          
+          // Extract beneficiary info
+          const subject = parsedData.subject || {};
+          
+          // Populate the form fields
+          document.getElementById('lastName').value = subject.lName || '';
+          document.getElementById('firstName').value = subject.fName || '';
+          document.getElementById('extName').value = subject.Suffix || '';
+          
+          showMessage('ok', 'QR Data Loaded Successfully!', 
+            `Last: ${subject.lName || 'N/A'}, First: ${subject.fName || 'N/A'}, Suffix: ${subject.Suffix || 'N/A'}`);
+          
+          console.log('QR Data parsed:', parsedData);
+          
+        } catch (error) {
+          showMessage('err', 'Invalid QR Data Format', 'Please paste valid JSON data from QR code');
+          console.error('QR Parse error:', error);
         }
       }
 
