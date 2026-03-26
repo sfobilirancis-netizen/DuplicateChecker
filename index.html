@@ -7,6 +7,13 @@
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
+    <h2>Manual Input</h2>
+    <input id="inputFName" placeholder="First Name" /><br><br>
+    <input id="inputLName" placeholder="Last Name" /><br><br>
+    <input id="inputSuffix" placeholder="Suffix" /><br><br>
+    <button onclick="showManualResult()">Show Manual Result</button>
+    <hr>
+
     <button id="scanBtn">Scan QR</button>
     <div id="status"></div>
     <div id="qr-reader" style="display: none;"></div>
@@ -22,6 +29,9 @@
         const qrReader = document.getElementById("qr-reader");
         const resultDiv = document.getElementById("result");
         const fullNameDiv = document.getElementById("fullName");
+        const inputFName = document.getElementById("inputFName");
+        const inputLName = document.getElementById("inputLName");
+        const inputSuffix = document.getElementById("inputSuffix");
 
         let isScanning = false;
 
@@ -66,6 +76,13 @@
         function onScanSuccess(decodedText, decodedResult) {
             try {
                 const data = JSON.parse(decodedText);
+                
+                // Auto-populate the input fields
+                inputFName.value = data.subject?.fName || "";
+                inputLName.value = data.subject?.lName || "";
+                inputSuffix.value = data.subject?.Suffix || "";
+                
+                // Show result
                 const suffix = data.subject?.Suffix || "";
                 const lName = data.subject?.lName || "N/A";
                 const fName = data.subject?.fName || "N/A";
@@ -88,6 +105,20 @@
         function closeResult() {
             resultDiv.style.display = "none";
             startScanner();
+        }
+
+        function showManualResult() {
+            const fName = inputFName.value || "N/A";
+            const lName = inputLName.value || "N/A";
+            const suffix = inputSuffix.value || "";
+            
+            const fullName = `${fName} ${suffix} ${lName}`.trim();
+            fullNameDiv.textContent = fullName;
+            
+            resultDiv.style.display = "block";
+            qrReader.style.display = "none";
+            statusDiv.style.display = "none";
+            scanBtn.textContent = "Scan QR";
         }
     </script>
 </body>
