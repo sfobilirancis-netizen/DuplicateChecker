@@ -16,9 +16,14 @@
       <h3>Beneficiary Duplicate Validation</h3>
       
       <form id="searchForm">
-        <div>
-          <label for="lastName">Last Name:</label>
-          <input id="lastName" type="text" placeholder="Enter last name">
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end;">
+          <div>
+            <label for="lastName">Last Name:</label>
+            <input id="lastName" type="text" placeholder="Enter last name">
+          </div>
+          <button type="button" onclick="startQRScan()" style="padding: 10px 15px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            📱 Scan QR
+          </button>
         </div>
         
         <div>
@@ -44,9 +49,11 @@
           </select>
         </div>
         
-        <button type="button" onclick="checkDuplicate()">Check Duplicate</button>
-        <button type="button" onclick="resetForm()">Reset</button>
-        <button type="button" onclick="testConnection()">Test Connection</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="button" onclick="checkDuplicate()" style="flex: 1; padding: 12px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">Check Duplicate</button>
+          <button type="button" onclick="resetForm()" style="padding: 12px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">Reset</button>
+          <button type="button" onclick="testConnection()" style="padding: 12px; background: #ffc107; color: black; border: none; border-radius: 5px; cursor: pointer;">Test Connection</button>
+        </div>
       </form>
 
       <div id="message"></div>
@@ -56,10 +63,24 @@
         <h4>Match Results</h4>
         <div id="resultsTable"></div>
       </div>
+
+      <!-- QR Scanner -->
+      <div id="qr-scanner" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
+        <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; max-width: 400px; width: 90%;">
+          <h3>📱 Scan QR Code</h3>
+          <video id="qr-video" style="width: 100%; max-width: 300px; border-radius: 10px;" autoplay></video>
+          <div id="qr-status" style="margin: 10px 0; font-weight: bold;"></div>
+          <button onclick="stopQRScan()" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">Cancel</button>
+        </div>
+      </div>
     </main>
 
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script>
-      // Try both URLs
+      let html5QrCode;
+      let qrStream;
+      
+      // URLs
       const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv';
       const HTML_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pubhtml';
       
@@ -70,12 +91,10 @@
         document.getElementById('debug').style.display = 'none';
         
         try {
-          // Test CSV
           const csvResponse = await fetch(CSV_URL);
-          const csvStatus = csvResponse.ok ? `✅ CSV OK (${csvResponse.status})` : `❌ CSV Failed (${csvResponse.status})`;
-          
-          // Test HTML
           const htmlResponse = await fetch(HTML_URL);
+          
+          const csvStatus = csvResponse.ok ? `✅ CSV OK (${csvResponse.status})` : `❌ CSV Failed (${csvResponse.status})`;
           const htmlStatus = htmlResponse.ok ? `✅ HTML OK (${htmlResponse.status})` : `❌ HTML Failed (${htmlResponse.status})`;
           
           document.getElementById('debug').innerHTML = `
@@ -94,52 +113,42 @@
       async function fetchData() {
         if (cachedData) return cachedData;
         
-        // Try CSV first
         try {
-          console.log('Trying CSV format...');
           const response = await fetch(CSV_URL);
           if (response.ok) {
             const csvText = await response.text();
             cachedData = parseCSV(csvText);
-            console.log(`CSV Success: ${cachedData.length} records`);
             return cachedData;
           }
-        } catch (csvError) {
-          console.log('CSV failed, trying HTML...');
-        }
-        
-        // Fallback to HTML
-        try {
-          console.log('Trying HTML format...');
-          const response = await fetch(HTML_URL);
-          const html = await response.text();
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const tables = doc.querySelectorAll('table');
-          if (tables.length > 0) {
-            cachedData = Array.from(tables[0].querySelectorAll('tr')).slice(1).map((row, index) => {
-              const cells = row.querySelectorAll('td');
-              return {
-                date: cells[0]?.textContent?.trim() || '',
-                lastName: cells[1]?.textContent?.trim() || '',
-                firstName: cells[2]?.textContent?.trim() || '',
-                extName: cells[3]?.textContent?.trim() || '',
-                assistanceType: cells[4]?.textContent?.trim() || '',
-                rowNumber: index + 2
-              };
-            }).filter(row => row.lastName);
-            console.log(`HTML Success: ${cachedData.length} records`);
-            return cachedData;
+        } catch (e) {
+          try {
+            const response = await fetch(HTML_URL);
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const tables = doc.querySelectorAll('table');
+            if (tables.length > 0) {
+              cachedData = Array.from(tables[0].querySelectorAll('tr')).slice(1).map((row, index) => {
+                const cells = row.querySelectorAll('td');
+                return {
+                  date: cells[0]?.textContent?.trim() || '',
+                  lastName: cells[1]?.textContent?.trim() || '',
+                  firstName: cells[2]?.textContent?.trim() || '',
+                  extName: cells[3]?.textContent?.trim() || '',
+                  assistanceType: cells[4]?.textContent?.trim() || '',
+                  rowNumber: index + 2
+                };
+              }).filter(row => row.lastName);
+              return cachedData;
+            }
+          } catch (htmlError) {
+            throw new Error('Both CSV and HTML formats failed');
           }
-        } catch (htmlError) {
-          console.error('Both formats failed:', htmlError);
         }
-        
-        throw new Error('Both CSV and HTML formats failed to load');
       }
 
       function parseCSV(csvText) {
-        const lines = csvText.trim().split('\n').slice(1); // Skip header
+        const lines = csvText.trim().split('\n').slice(1);
         return lines.map((line, index) => {
           const cols = parseCSVLine(line);
           return {
@@ -150,28 +159,74 @@
             assistanceType: cols[4]?.trim() || '',
             rowNumber: index + 2
           };
-        }).filter(row => row.lastName && row.lastName.length > 0);
+        }).filter(row => row.lastName);
       }
 
       function parseCSVLine(line) {
         const result = [];
         let current = '';
         let inQuotes = false;
-        
         for (let i = 0; i < line.length; i++) {
           const char = line[i];
-          
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
+          if (char === '"') inQuotes = !inQuotes;
+          else if (char === ',' && !inQuotes) {
             result.push(current.trim());
             current = '';
-          } else {
-            current += char;
-          }
+          } else current += char;
         }
         result.push(current.trim());
         return result;
+      }
+
+      // QR Code Scanner
+      async function startQRScan() {
+        const scannerDiv = document.getElementById('qr-scanner');
+        scannerDiv.style.display = 'flex';
+        
+        html5QrCode = new Html5Qrcode("qr-video");
+        
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        try {
+          qrStream = await html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            onQRScanSuccess,
+            undefined
+          );
+        } catch (err) {
+          document.getElementById('qr-status').textContent = 'Error starting camera: ' + err;
+        }
+      }
+
+      function stopQRScan() {
+        if (html5QrCode && qrStream) {
+          html5QrCode.stop(qrStream).then(() => {
+            document.getElementById('qr-scanner').style.display = 'none';
+            document.getElementById('qr-status').textContent = '';
+          });
+        } else {
+          document.getElementById('qr-scanner').style.display = 'none';
+        }
+      }
+
+      function onQRScanSuccess(decodedText) {
+        console.log('QR Scanned:', decodedText);
+        try {
+          const qrData = JSON.parse(decodedText);
+          const subject = qrData.subject || {};
+          
+          document.getElementById('lastName').value = subject.lName || '';
+          document.getElementById('firstName').value = subject.fName || '';
+          document.getElementById('extName').value = subject.Suffix || '';
+          
+          showMessage('ok', 'QR Scanned Successfully!', 
+            `Loaded: ${subject.fName} ${subject.lName} ${subject.Suffix}`);
+          
+          stopQRScan();
+        } catch (e) {
+          document.getElementById('qr-status').textContent = 'Invalid QR format';
+        }
       }
 
       async function checkDuplicate() {
@@ -187,33 +242,20 @@
 
         try {
           const data = await fetchData();
-          
-          console.log('🔍 Search payload:', payload);
-          console.log('📊 Total records:', data.length);
-          
-          const matches = data.filter(row => {
-            const isLastMatch = row.lastName.toLowerCase().trim() === payload.lastName.toLowerCase().trim();
-            const isFirstMatch = row.firstName.toLowerCase().trim() === payload.firstName.toLowerCase().trim();
-            const isTypeMatch = row.assistanceType.toLowerCase().trim() === payload.assistanceType.toLowerCase().trim();
-            
-            if (isLastMatch && isFirstMatch && isTypeMatch) {
-              console.log('✅ MATCH FOUND:', row);
-            }
-            
-            return isLastMatch && isFirstMatch && isTypeMatch;
-          });
-
-          console.log('🎯 Final matches:', matches.length);
+          const matches = data.filter(row => 
+            row.lastName.toLowerCase().trim() === payload.lastName.toLowerCase().trim() &&
+            row.firstName.toLowerCase().trim() === payload.firstName.toLowerCase().trim() &&
+            row.assistanceType.toLowerCase().trim() === payload.assistanceType.toLowerCase().trim()
+          );
 
           if (matches.length > 0) {
-            showMessage('ok', `DUPLICATE FOUND (${matches.length} match${matches.length > 1 ? 'es' : ''})`);
+            showMessage('ok', `DUPLICATE FOUND (${matches.length} match${matches.length>1?'es':''})`);
             renderMatches(matches);
           } else {
             showMessage('ok', 'NO DUPLICATE FOUND');
           }
         } catch (error) {
           showMessage('err', `Error: ${error.message}`);
-          console.error('Full error:', error);
         } finally {
           setBusy(false);
         }
@@ -239,29 +281,22 @@
         const color = type === 'err' ? 'red' : type === 'ok' ? 'green' : 'blue';
         const bgColor = type === 'err' ? '#fee' : type === 'ok' ? '#efe' : '#eef';
         el.innerHTML = `<div style="padding: 15px; margin: 15px 0; border: 3px solid ${color}; background: ${bgColor}; font-size: 20px; font-weight: bold; text-align: center;">
-          ${escapeHtml(title)}
-          ${detail ? `<br><small style="font-size: 14px;">${escapeHtml(detail)}</small>` : ''}
+          ${escapeHtml(title)}${detail ? `<br><small style="font-size: 14px;">${escapeHtml(detail)}</small>` : ''}
         </div>`;
       }
 
       function renderMatches(matches) {
         document.getElementById('results').style.display = 'block';
-        let html = `
-          <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-            <thead><tr style="background: #dc3545; color: white;">
-              <th style="padding: 12px;">Date</th><th style="padding: 12px;">Last</th><th style="padding: 12px;">First</th>
-              <th style="padding: 12px;">Ext</th><th style="padding: 12px;">Type</th><th style="padding: 12px;">Row</th>
-            </tr></thead><tbody>
-        `;
+        let html = `<table border="1" style="width:100%;border-collapse:collapse;margin-top:10px;"><thead><tr style="background:#dc3545;color:white;">`;
+        ['Date','Last','First','Ext','Type','Row'].forEach(h => html += `<th style="padding:12px;">${h}</th>`);
+        html += `</tr></thead><tbody>`;
         matches.forEach(m => {
-          html += `<tr style="background: #fff3cd;">
-            <td style="padding: 10px;">${escapeHtml(m.date)}</td>
-            <td style="padding: 10px;font-weight:bold;color:red;">${escapeHtml(m.lastName)}</td>
-            <td style="padding: 10px;font-weight:bold;color:red;">${escapeHtml(m.firstName)}</td>
-            <td style="padding: 10px;">${escapeHtml(m.extName)}</td>
-            <td style="padding: 10px;background:#ffe6e6;font-weight:bold;">${escapeHtml(m.assistanceType)}</td>
-            <td style="padding: 10px;font-weight:bold;color:red;">${m.rowNumber}</td>
-          </tr>`;
+          html += `<tr style="background:#fff3cd;"><td style="padding:10px;">${escapeHtml(m.date)}</td>
+            <td style="padding:10px;font-weight:bold;color:red;">${escapeHtml(m.lastName)}</td>
+            <td style="padding:10px;font-weight:bold;color:red;">${escapeHtml(m.firstName)}</td>
+            <td style="padding:10px;">${escapeHtml(m.extName)}</td>
+            <td style="padding:10px;background:#ffe6e6;font-weight:bold;">${escapeHtml(m.assistanceType)}</td>
+            <td style="padding:10px;font-weight:bold;color:red;">${m.rowNumber}</td></tr>`;
         });
         html += '</tbody></table>';
         document.getElementById('resultsTable').innerHTML = html;
@@ -282,10 +317,7 @@
       }
 
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
-          e.preventDefault();
-          checkDuplicate();
-        }
+        if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') e.preventDefault(), checkDuplicate();
       });
     </script>
   </body>
