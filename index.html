@@ -1,224 +1,292 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Duplicate Checker</title>
-</head>
-<body>
-  <h1>DSWD Duplicate Checker</h1>
-  
-  <h3>Beneficiary Search</h3>
-  <form id="searchForm">
-    <p>
-      <label>Last Name: <input id="lastName" type="text"></label>
-      <button type="button" onclick="startQRScan()">Scan QR</button>
-    </p>
-    <p><label>First Name: <input id="firstName" type="text"></label></p>
-    <p><label>Ext Name: <input id="extName" type="text"></label></p>
-    <p>
-      <label>Type: 
-        <select id="assistanceType">
-          <option value="">Select...</option>
-          <option value="Cash Relief Assistance">Cash Relief</option>
-          <option value="Medical Assistance">Medical</option>
-          <option value="Food Assistance">Food</option>
-          <option value="Funeral Assistance">Funeral</option>
-          <option value="Transportation Assistance">Transport</option>
-          <option value="Educational Assistance">Education</option>
-        </select>
-      </label>
-    </p>
-    <p>
-      <button onclick="checkDuplicate()">Check Duplicate</button>
-      <button onclick="resetForm()">Reset</button>
-      <button onclick="testConnection()">Test Data</button>
-    </p>
-  </form>
+  <head>
+    <base target="_top" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Duplicate Checker</title>
+  </head>
 
-  <div id="message"></div>
-  <div id="qr-scanner" style="display:none;">
-    <h4>Scan QR Code</h4>
-    <video id="qr-video" width="300" height="300" autoplay></video>
-    <p id="qr-status">Loading camera...</p>
-    <button onclick="stopQRScan()">Cancel</button>
-  </div>
+  <body>
+    <header>
+      <h1>Department of Social Welfare and Development</h1>
+      <h2>Duplicate Checker</h2>
+    </header>
 
-  <div id="results" style="display:none;">
-    <h4>Results</h4>
-    <div id="resultsTable"></div>
-  </div>
-
-  <script src="https://unpkg.com/@zxing/library@0.20.2/umd/index.min.js"></script>
-  <script>
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv';
-    let cachedData = null;
-    let codeReader;
-    let videoPlaying = false;
-
-    async function startQRScan() {
-      const scanner = document.getElementById('qr-scanner');
-      scanner.style.display = 'block';
-      document.getElementById('qr-status').textContent = 'Requesting camera...';
+    <main>
+      <h3>Beneficiary Duplicate Validation</h3>
       
-      try {
-        codeReader = new ZXing.BrowserQRCodeReader();
+      <form id="searchForm">
+        <div>
+          <label for="lastName">Last Name:</label>
+          <input id="lastName" type="text" placeholder="Enter last name">
+        </div>
         
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' }
-        });
+        <div>
+          <label for="firstName">First Name:</label>
+          <input id="firstName" type="text" placeholder="Enter first name">
+        </div>
         
-        const video = document.getElementById('qr-video');
-        video.srcObject = stream;
-        video.play();
-        videoPlaying = true;
+        <div>
+          <label for="extName">Extension Name:</label>
+          <input id="extName" type="text" placeholder="JR, SR, etc.">
+        </div>
         
-        document.getElementById('qr-status').textContent = 'Scan QR code...';
+        <div>
+          <label for="assistanceType">Type of Assistance:</label>
+          <select id="assistanceType">
+            <option value="">Select type</option>
+            <option value="Cash Relief Assistance">Cash Relief Assistance</option>
+            <option value="Medical Assistance">Medical Assistance</option>
+            <option value="Food Assistance">Food Assistance</option>
+            <option value="Funeral Assistance">Funeral Assistance</option>
+            <option value="Transportation Assistance">Transportation Assistance</option>
+            <option value="Educational Assistance">Educational Assistance</option>
+          </select>
+        </div>
         
-        codeReader.decodeFromVideoDevice(stream, 'qr-video', (result, err) => {
-          if (result) {
-            processQR(result.text);
-          }
-        });
-        
-      } catch (err) {
-        document.getElementById('qr-status').textContent = 'Camera error: ' + err.message;
-        console.error(err);
-      }
-    }
+        <button type="button" onclick="checkDuplicate()">Check Duplicate</button>
+        <button type="button" onclick="resetForm()">Reset</button>
+        <button type="button" onclick="testConnection()">Test Connection</button>
+      </form>
 
-    function processQR(text) {
-      try {
-        const data = JSON.parse(text);
-        const subject = data.subject || {};
-        document.getElementById('lastName').value = subject.lName || '';
-        document.getElementById('firstName').value = subject.fName || '';
-        document.getElementById('extName').value = subject.Suffix || '';
-        
-        document.getElementById('message').innerHTML = '<p style="color:green;font-weight:bold;">QR LOADED: ' + 
-          (subject.fName + ' ' + subject.lName).trim() + '</p>';
-        
-        stopQRScan();
-      } catch (e) {
-        document.getElementById('qr-status').textContent = 'Invalid QR data';
-      }
-    }
+      <div id="message"></div>
+      <div id="debug" style="display: none; background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 12px; max-height: 300px; overflow: auto;"></div>
 
-    function stopQRScan() {
-      document.getElementById('qr-scanner').style.display = 'none';
-      if (codeReader) codeReader.reset();
-      const video = document.getElementById('qr-video');
-      if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
-      }
-    }
+      <div id="results" style="display: none;">
+        <h4>Match Results</h4>
+        <div id="resultsTable"></div>
+      </div>
+    </main>
 
-    async function checkDuplicate() {
-      const payload = getPayload();
-      if (!payload.lastName || !payload.firstName || !payload.assistanceType) {
-        showMessage('Please fill all fields');
-        return;
-      }
+    <script>
+      // Try both URLs
+      const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv';
+      const HTML_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pubhtml';
       
-      showMessage('Searching...');
-      try {
-        const data = await fetchData();
-        const matches = data.filter(row => 
-          row.lastName.toLowerCase() === payload.lastName.toLowerCase() &&
-          row.firstName.toLowerCase() === payload.firstName.toLowerCase() &&
-          row.assistanceType.toLowerCase() === payload.assistanceType.toLowerCase()
-        );
+      let cachedData = null;
+
+      async function testConnection() {
+        showMessage('info', 'Testing connections...');
+        document.getElementById('debug').style.display = 'none';
         
-        if (matches.length > 0) {
-          showMessage('DUPLICATE FOUND (' + matches.length + ')');
-          renderMatches(matches);
-        } else {
-          showMessage('NO DUPLICATE FOUND');
+        try {
+          // Test CSV
+          const csvResponse = await fetch(CSV_URL);
+          const csvStatus = csvResponse.ok ? `✅ CSV OK (${csvResponse.status})` : `❌ CSV Failed (${csvResponse.status})`;
+          
+          // Test HTML
+          const htmlResponse = await fetch(HTML_URL);
+          const htmlStatus = htmlResponse.ok ? `✅ HTML OK (${htmlResponse.status})` : `❌ HTML Failed (${htmlResponse.status})`;
+          
+          document.getElementById('debug').innerHTML = `
+            <strong>Connection Test Results:</strong><br>
+            ${csvStatus}<br>
+            ${htmlStatus}
+          `;
+          document.getElementById('debug').style.display = 'block';
+          
+        } catch (error) {
+          document.getElementById('debug').innerHTML = `Network error: ${error.message}`;
+          document.getElementById('debug').style.display = 'block';
         }
-      } catch (e) {
-        showMessage('Error: ' + e.message);
       }
-    }
 
-    async function fetchData() {
-      if (cachedData) return cachedData;
-      
-      try {
-        const res = await fetch(CSV_URL);
-        const csv = await res.text();
-        cachedData = parseCSV(csv);
-      } catch (e) {
-        throw new Error('Cannot load data');
+      async function fetchData() {
+        if (cachedData) return cachedData;
+        
+        // Try CSV first
+        try {
+          console.log('Trying CSV format...');
+          const response = await fetch(CSV_URL);
+          if (response.ok) {
+            const csvText = await response.text();
+            cachedData = parseCSV(csvText);
+            console.log(`CSV Success: ${cachedData.length} records`);
+            return cachedData;
+          }
+        } catch (csvError) {
+          console.log('CSV failed, trying HTML...');
+        }
+        
+        // Fallback to HTML
+        try {
+          console.log('Trying HTML format...');
+          const response = await fetch(HTML_URL);
+          const html = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const tables = doc.querySelectorAll('table');
+          if (tables.length > 0) {
+            cachedData = Array.from(tables[0].querySelectorAll('tr')).slice(1).map((row, index) => {
+              const cells = row.querySelectorAll('td');
+              return {
+                date: cells[0]?.textContent?.trim() || '',
+                lastName: cells[1]?.textContent?.trim() || '',
+                firstName: cells[2]?.textContent?.trim() || '',
+                extName: cells[3]?.textContent?.trim() || '',
+                assistanceType: cells[4]?.textContent?.trim() || '',
+                rowNumber: index + 2
+              };
+            }).filter(row => row.lastName);
+            console.log(`HTML Success: ${cachedData.length} records`);
+            return cachedData;
+          }
+        } catch (htmlError) {
+          console.error('Both formats failed:', htmlError);
+        }
+        
+        throw new Error('Both CSV and HTML formats failed to load');
       }
-      return cachedData;
-    }
 
-    function parseCSV(csv) {
-      return csv.trim().split('\n').slice(1).map((line, i) => {
-        const cols = line.split(',').map(c => c.replace(/"/g, '').trim());
+      function parseCSV(csvText) {
+        const lines = csvText.trim().split('\n').slice(1); // Skip header
+        return lines.map((line, index) => {
+          const cols = parseCSVLine(line);
+          return {
+            date: cols[0]?.trim() || '',
+            lastName: cols[1]?.trim() || '',
+            firstName: cols[2]?.trim() || '',
+            extName: cols[3]?.trim() || '',
+            assistanceType: cols[4]?.trim() || '',
+            rowNumber: index + 2
+          };
+        }).filter(row => row.lastName && row.lastName.length > 0);
+      }
+
+      function parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.trim());
+        return result;
+      }
+
+      async function checkDuplicate() {
+        const payload = getPayload();
+        if (!payload.lastName || !payload.firstName || !payload.assistanceType) {
+          showMessage('err', 'Please fill Last Name, First Name, and Type of Assistance.');
+          return;
+        }
+
+        setBusy(true);
+        document.getElementById('debug').style.display = 'none';
+        showMessage('info', 'Searching...', 'Checking for duplicates...');
+
+        try {
+          const data = await fetchData();
+          
+          console.log('🔍 Search payload:', payload);
+          console.log('📊 Total records:', data.length);
+          
+          const matches = data.filter(row => {
+            const isLastMatch = row.lastName.toLowerCase().trim() === payload.lastName.toLowerCase().trim();
+            const isFirstMatch = row.firstName.toLowerCase().trim() === payload.firstName.toLowerCase().trim();
+            const isTypeMatch = row.assistanceType.toLowerCase().trim() === payload.assistanceType.toLowerCase().trim();
+            
+            if (isLastMatch && isFirstMatch && isTypeMatch) {
+              console.log('✅ MATCH FOUND:', row);
+            }
+            
+            return isLastMatch && isFirstMatch && isTypeMatch;
+          });
+
+          console.log('🎯 Final matches:', matches.length);
+
+          if (matches.length > 0) {
+            showMessage('ok', `DUPLICATE FOUND (${matches.length} match${matches.length > 1 ? 'es' : ''})`);
+            renderMatches(matches);
+          } else {
+            showMessage('ok', 'NO DUPLICATE FOUND');
+          }
+        } catch (error) {
+          showMessage('err', `Error: ${error.message}`);
+          console.error('Full error:', error);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      function getPayload() {
         return {
-          date: cols[0] || '',
-          lastName: cols[1] || '',
-          firstName: cols[2] || '',
-          extName: cols[3] || '',
-          assistanceType: cols[4] || '',
-          rowNumber: i + 2
+          lastName: document.getElementById("lastName").value.trim(),
+          firstName: document.getElementById("firstName").value.trim(),
+          extName: document.getElementById("extName").value.trim(),
+          assistanceType: document.getElementById("assistanceType").value,
         };
-      }).filter(r => r.lastName);
-    }
-
-    function renderMatches(matches) {
-      document.getElementById('results').style.display = 'block';
-      let html = '<table border="1"><tr><th>Date</th><th>Last</th><th>First</th><th>Ext</th><th>Type</th><th>Row</th></tr>';
-      matches.forEach(m => {
-        html += `<tr>
-          <td>${m.date}</td>
-          <td style="color:red;font-weight:bold;">${m.lastName}</td>
-          <td style="color:red;font-weight:bold;">${m.firstName}</td>
-          <td>${m.extName}</td>
-          <td style="background:#ffe6e6">${m.assistanceType}</td>
-          <td style="color:red;font-weight:bold;">${m.rowNumber}</td>
-        </tr>`;
-      });
-      html += '</table>';
-      document.getElementById('resultsTable').innerHTML = html;
-    }
-
-    function getPayload() {
-      return {
-        lastName: document.getElementById('lastName').value.trim(),
-        firstName: document.getElementById('firstName').value.trim(),
-        assistanceType: document.getElementById('assistanceType').value
-      };
-    }
-
-    function showMessage(text) {
-      document.getElementById('message').innerHTML = '<p style="padding:10px;margin:10px 0;font-weight:bold;' + 
-        (text.includes('FOUND') ? 'color:green;background:#efe;' : 
-         text.includes('Error') ? 'color:red;background:#fee;' : 
-         'color:blue;background:#eef;') + '">' + text + '</p>';
-    }
-
-    function resetForm() {
-      document.getElementById('searchForm').reset();
-      document.getElementById('message').innerHTML = '';
-      document.getElementById('results').style.display = 'none';
-      cachedData = null;
-    }
-
-    async function testConnection() {
-      try {
-        const data = await fetchData();
-        showMessage('Data loaded: ' + data.length + ' records');
-      } catch (e) {
-        showMessage('Data error: ' + e.message);
       }
-    }
 
-    // Enter key
-    document.addEventListener('keypress', e => {
-      if (e.key === 'Enter') checkDuplicate();
-    });
-  </script>
-</body>
+      function setBusy(isBusy) {
+        const btn = document.querySelector('button[onclick="checkDuplicate()"]');
+        btn.disabled = isBusy;
+        btn.textContent = isBusy ? 'Checking...' : 'Check Duplicate';
+      }
+
+      function showMessage(type, title, detail = '') {
+        const el = document.getElementById("message");
+        const color = type === 'err' ? 'red' : type === 'ok' ? 'green' : 'blue';
+        const bgColor = type === 'err' ? '#fee' : type === 'ok' ? '#efe' : '#eef';
+        el.innerHTML = `<div style="padding: 15px; margin: 15px 0; border: 3px solid ${color}; background: ${bgColor}; font-size: 20px; font-weight: bold; text-align: center;">
+          ${escapeHtml(title)}
+          ${detail ? `<br><small style="font-size: 14px;">${escapeHtml(detail)}</small>` : ''}
+        </div>`;
+      }
+
+      function renderMatches(matches) {
+        document.getElementById('results').style.display = 'block';
+        let html = `
+          <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead><tr style="background: #dc3545; color: white;">
+              <th style="padding: 12px;">Date</th><th style="padding: 12px;">Last</th><th style="padding: 12px;">First</th>
+              <th style="padding: 12px;">Ext</th><th style="padding: 12px;">Type</th><th style="padding: 12px;">Row</th>
+            </tr></thead><tbody>
+        `;
+        matches.forEach(m => {
+          html += `<tr style="background: #fff3cd;">
+            <td style="padding: 10px;">${escapeHtml(m.date)}</td>
+            <td style="padding: 10px;font-weight:bold;color:red;">${escapeHtml(m.lastName)}</td>
+            <td style="padding: 10px;font-weight:bold;color:red;">${escapeHtml(m.firstName)}</td>
+            <td style="padding: 10px;">${escapeHtml(m.extName)}</td>
+            <td style="padding: 10px;background:#ffe6e6;font-weight:bold;">${escapeHtml(m.assistanceType)}</td>
+            <td style="padding: 10px;font-weight:bold;color:red;">${m.rowNumber}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('resultsTable').innerHTML = html;
+      }
+
+      function resetForm() {
+        document.getElementById('searchForm').reset();
+        document.getElementById('message').innerHTML = '';
+        document.getElementById('results').style.display = 'none';
+        document.getElementById('debug').style.display = 'none';
+        document.querySelector('button[onclick="checkDuplicate()"]').textContent = 'Check Duplicate';
+        cachedData = null;
+      }
+
+      function escapeHtml(text) {
+        const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#039;'};
+        return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+          e.preventDefault();
+          checkDuplicate();
+        }
+      });
+    </script>
+  </body>
 </html>
