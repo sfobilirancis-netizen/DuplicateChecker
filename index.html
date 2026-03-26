@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Duplicate Checker</title>
+</head>
+<body>
+  <h2>Duplicate Checker</h2>
+
+  <label>Last Name: <input id="lastName"></label><br>
+  <label>First Name: <input id="firstName"></label><br>
+  <label>Ext (if any): <input id="extName"></label><br>
+  <label>Assistance Type: 
+    <select id="assistanceType">
+      <option value="">Select</option>
+      <option value="Cash Relief Assistance">Cash Relief</option>
+      <option value="Medical Assistance">Medical</option>
+      <option value="Food Assistance">Food</option>
+      <option value="Funeral Assistance">Funeral</option>
+      <option value="Transportation Assistance">Transport</option>
+      <option value="Educational Assistance">Education</option>
+    </select>
+  </label><br><br>
+
+  <button onclick="checkDuplicate()">Check Duplicate</button>
+
+  <pre id="output"></pre>
+
+  <script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyNUDJisvgnrZrSKNa-FbY20cfjNMtbPILHzKgacKq5Loz4E_K8RJ6VJth7od_wJccLUg/exec";
+
+    async function checkDuplicate() {
+      const payload = {
+        lastName: document.getElementById("lastName").value,
+        firstName: document.getElementById("firstName").value,
+        extName: document.getElementById("extName").value,
+        assistanceType: document.getElementById("assistanceType").value
+      };
+
+      document.getElementById("output").textContent = "Checking…";
+
+      try {
+        const res = await fetch(WEB_APP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+      } catch(err) {
+        document.getElementById("output").textContent = "Error: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
