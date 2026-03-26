@@ -1,177 +1,184 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Scanner</title>
+<html>
+  <head>
+    <base target="_top" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-</head>
-<body>
-    <div>
-      <label for="lastName">Beneficiary's Last Name</label>
-      <input id="lastName" type="text" placeholder="Enter beneficiary's last name" autocomplete="off" />
-    </div>
+  </head>
 
-    <div>
-      <label for="firstName">Beneficiary's First Name</label>
-      <input id="firstName" type="text" placeholder="Enter beneficiary's first name" autocomplete="off" />
-    </div>
+  <body>
+    <header>
+      <div>Republic of the Philippines</div>
+      <div>Department of Social Welfare and Development</div>
+      <div>QR Duplicate Checker</div>
+    </header>
 
-    <div>
-      <label for="extName">Beneficiary's Extension (if any)</label>
-      <input id="extName" type="text" placeholder="e.g. JR / SR / II" autocomplete="off" />
-    </div>
+    <main>
+      <div>
+        <label for="lastName">Beneficiary's Last Name</label>
+        <input id="lastName" type="text" placeholder="Enter beneficiary's last name" autocomplete="off" />
+      </div>
 
-    <div>
-      <label for="assistanceType">Type of Assistance</label>
-      <select id="assistanceType">
-        <option value="" disabled selected>Select type of assistance</option>
-        <option value="Cash Relief Assistance">Cash Relief Assistance</option>
-        <option value="Medical Assistance">Medical Assistance</option>
-        <option value="Food Assistance">Food Assistance</option>
-        <option value="Funeral Assistance">Funeral Assistance</option>
-        <option value="Transportation Assistance">Transportation Assistance</option>
-        <option value="Educational Assistance">Educational Assistance</option>
-      </select>
-    </div>
+      <div>
+        <label for="firstName">Beneficiary's First Name</label>
+        <input id="firstName" type="text" placeholder="Enter beneficiary's first name" autocomplete="off" />
+      </div>
 
-    <button id="scanBtn">Scan QR</button>
-    <button id="checkBtn" style="display: none;">Check Duplicate</button>
-    
-    <div id="duplicateStatus" style="display: none; margin-top: 20px; padding: 10px;"></div>
-    
-    <div id="qr-reader" style="display: none;"></div>
+      <div>
+        <label for="extName">Beneficiary's Extension (if any)</label>
+        <input id="extName" type="text" placeholder="e.g. JR / SR / II" autocomplete="off" />
+      </div>
+
+      <div>
+        <label for="assistanceType">Type of Assistance</label>
+        <select id="assistanceType">
+          <option value="" disabled selected>Select type of assistance</option>
+          <option value="Cash Relief Assistance">Cash Relief Assistance</option>
+          <option value="Medical Assistance">Medical Assistance</option>
+          <option value="Food Assistance">Food Assistance</option>
+          <option value="Funeral Assistance">Funeral Assistance</option>
+          <option value="Transportation Assistance">Transportation Assistance</option>
+          <option value="Educational Assistance">Educational Assistance</option>
+        </select>
+      </div>
+
+      <button id="scanBtn">Scan QR</button>
+      <button id="checkBtn" style="display: none;">Check Duplicate</button>
+      
+      <div id="status"></div>
+      <div id="qr-reader" style="display: none;"></div>
+    </main>
 
     <script>
-        const html5QrCode = new Html5Qrcode("qr-reader");
-        const scanBtn = document.getElementById("scanBtn");
-        const checkBtn = document.getElementById("checkBtn");
-        const duplicateStatus = document.getElementById("duplicateStatus");
-        const qrReader = document.getElementById("qr-reader");
-        
-        const firstNameInput = document.getElementById("firstName");
-        const lastNameInput = document.getElementById("lastName");
-        const extNameInput = document.getElementById("extName");
-        const assistanceTypeInput = document.getElementById("assistanceType");
+      const html5QrCode = new Html5Qrcode("qr-reader");
+      const scanBtn = document.getElementById("scanBtn");
+      const checkBtn = document.getElementById("checkBtn");
+      const statusDiv = document.getElementById("status");
+      const qrReader = document.getElementById("qr-reader");
+      
+      const firstNameInput = document.getElementById("firstName");
+      const lastNameInput = document.getElementById("lastName");
+      const extNameInput = document.getElementById("extName");
+      const assistanceTypeInput = document.getElementById("assistanceType");
 
-        let isScanning = false;
-        let spreadsheetData = [];
-        let isDataLoaded = false;
+      let isScanning = false;
+      let spreadsheetData = [];
+      let isDataLoaded = false;
 
-        // PASTE YOUR GOOGLE SHEETS CSV LINK HERE
-        const GOOGLE_SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?output=csv';
+      // PASTE YOUR GOOGLE SHEETS CSV LINK HERE (Line 72)
+      const GOOGLE_SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pubhtml';
 
-        async function loadSpreadsheetData() {
-            try {
-                duplicateStatus.textContent = "Loading LIVE data...";
-                duplicateStatus.style.display = "block";
-                
-                const response = await fetch(GOOGLE_SHEETS_CSV);
-                const csvText = await response.text();
-                spreadsheetData = parseCSV(csvText);
-                
-                duplicateStatus.textContent = `LIVE: ${spreadsheetData.length} records loaded`;
-                setTimeout(() => duplicateStatus.style.display = "none", 2000);
-                isDataLoaded = true;
-            } catch (error) {
-                console.error('Error:', error);
-                duplicateStatus.textContent = "Error loading sheet";
-                isDataLoaded = true;
-            }
+      async function loadSpreadsheetData() {
+        try {
+          statusDiv.textContent = "Loading LIVE data...";
+          statusDiv.style.display = "block";
+          
+          const response = await fetch(GOOGLE_SHEETS_CSV);
+          const csvText = await response.text();
+          spreadsheetData = parseCSV(csvText);
+          
+          statusDiv.textContent = `LIVE: ${spreadsheetData.length} records loaded`;
+          setTimeout(() => statusDiv.style.display = "none", 2000);
+          isDataLoaded = true;
+        } catch (error) {
+          console.error('Error:', error);
+          statusDiv.textContent = "Error loading sheet";
+          isDataLoaded = true;
         }
+      }
 
-        function parseCSV(csvText) {
-            const lines = csvText.split('\n').filter(line => line.trim());
-            const data = [];
-            for (let i = 1; i < lines.length; i++) {
-                const cols = lines[i].split(',').map(col => col.trim().replace(/"/g, ''));
-                if (cols[1] && cols[2]) { // Columns B & C required
-                    data.push({
-                        lastName: cols[1],      // Column B (index 1)
-                        firstName: cols[2],     // Column C (index 2)
-                        extName: cols[3] || '', // Column D (index 3)
-                        assistanceType: cols[4] || '' // Column E (index 4)
-                    });
-                }
-            }
-            return data;
-        }
-
-        scanBtn.addEventListener("click", async () => {
-            if (isScanning) {
-                stopScanner();
-            } else {
-                await loadSpreadsheetData();
-                startScanner();
-            }
-        });
-
-        checkBtn.addEventListener("click", checkForDuplicate);
-
-        async function startScanner() {
-            try {
-                scanBtn.textContent = "Stop Scanner";
-                checkBtn.style.display = "none";
-                duplicateStatus.style.display = "none";
-                qrReader.style.display = "block";
-                isScanning = true;
-
-                await html5QrCode.start(
-                    { facingMode: "environment" },
-                    { fps: 10, qrbox: { width: 250, height: 250 } },
-                    onScanSuccess,
-                    onScanError
-                );
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        function stopScanner() {
-            html5QrCode.stop().then(() => {
-                isScanning = false;
-                scanBtn.textContent = "Scan QR";
-                qrReader.style.display = "none";
+      function parseCSV(csvText) {
+        const lines = csvText.split('\n').filter(line => line.trim());
+        const data = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',').map(col => col.trim().replace(/"/g, ''));
+          if (cols[1] && cols[2]) {
+            data.push({
+              lastName: cols[1],      // Column B
+              firstName: cols[2],     // Column C
+              extName: cols[3] || '', // Column D
+              assistanceType: cols[4] || '' // Column E
             });
+          }
+        }
+        return data;
+      }
+
+      scanBtn.addEventListener("click", async () => {
+        if (isScanning) {
+          stopScanner();
+        } else {
+          await loadSpreadsheetData();
+          startScanner();
+        }
+      });
+
+      checkBtn.addEventListener("click", checkForDuplicate);
+
+      async function startScanner() {
+        try {
+          scanBtn.textContent = "Stop Scanner";
+          checkBtn.style.display = "none";
+          statusDiv.style.display = "none";
+          qrReader.style.display = "block";
+          isScanning = true;
+
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            onScanSuccess,
+            onScanError
+          );
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      function stopScanner() {
+        html5QrCode.stop().then(() => {
+          isScanning = false;
+          scanBtn.textContent = "Scan QR";
+          qrReader.style.display = "none";
+        });
+      }
+
+      function onScanSuccess(decodedText) {
+        try {
+          const data = JSON.parse(decodedText);
+          firstNameInput.value = data.subject?.fName || "";
+          lastNameInput.value = data.subject?.lName || "";
+          extNameInput.value = data.subject?.Suffix || "";
+          stopScanner();
+          checkBtn.style.display = "inline-block";
+        } catch (error) {
+          console.error("Invalid QR:", error);
+        }
+      }
+
+      function onScanError() {}
+
+      function checkForDuplicate() {
+        const lastName = lastNameInput.value.trim().toUpperCase();
+        const firstName = firstNameInput.value.trim().toUpperCase();
+        const extName = extNameInput.value.trim().toUpperCase();
+        const assistanceType = assistanceTypeInput.value.trim();
+
+        if (!lastName || !firstName || !assistanceType) {
+          statusDiv.textContent = "Fill all fields";
+          statusDiv.style.display = "block";
+          return;
         }
 
-        function onScanSuccess(decodedText) {
-            try {
-                const data = JSON.parse(decodedText);
-                firstNameInput.value = data.subject?.fName || "";
-                lastNameInput.value = data.subject?.lName || "";
-                extNameInput.value = data.subject?.Suffix || "";
-                stopScanner();
-                checkBtn.style.display = "inline-block";
-            } catch (error) {
-                console.error("Invalid QR:", error);
-            }
-        }
+        const duplicate = spreadsheetData.find(row => 
+          row.lastName.toUpperCase() === lastName &&
+          row.firstName.toUpperCase() === firstName &&
+          row.extName.toUpperCase() === extName &&
+          row.assistanceType === assistanceType
+        );
 
-        function onScanError() {}
-
-        function checkForDuplicate() {
-            const lastName = lastNameInput.value.trim().toUpperCase();
-            const firstName = firstNameInput.value.trim().toUpperCase();
-            const extName = extNameInput.value.trim().toUpperCase();
-            const assistanceType = assistanceTypeInput.value.trim();
-
-            if (!lastName || !firstName || !assistanceType) {
-                duplicateStatus.textContent = "Fill all fields";
-                duplicateStatus.style.display = "block";
-                return;
-            }
-
-            const duplicate = spreadsheetData.find(row => 
-                row.lastName.toUpperCase() === lastName &&
-                row.firstName.toUpperCase() === firstName &&
-                row.extName.toUpperCase() === extName &&
-                row.assistanceType === assistanceType
-            );
-
-            duplicateStatus.textContent = duplicate ? "DUPLICATE" : "No duplicate found";
-            duplicateStatus.style.display = "block";
-        }
+        statusDiv.textContent = duplicate ? "DUPLICATE" : "No duplicate found";
+        statusDiv.style.display = "block";
+      }
     </script>
-</body>
+  </body>
 </html>
