@@ -7,12 +7,33 @@
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
-    <h2>Manual Input</h2>
-    <input id="inputFName" placeholder="First Name" /><br><br>
-    <input id="inputLName" placeholder="Last Name" /><br><br>
-    <input id="inputSuffix" placeholder="Suffix" /><br><br>
-    <button onclick="showManualResult()">Show Manual Result</button>
-    <hr>
+    <div>
+      <label for="lastName">Beneficiary's Last Name</label>
+      <input id="lastName" type="text" placeholder="Enter beneficiary's last name" autocomplete="off" />
+    </div>
+
+    <div>
+      <label for="firstName">Beneficiary's First Name</label>
+      <input id="firstName" type="text" placeholder="Enter beneficiary's first name" autocomplete="off" />
+    </div>
+
+    <div>
+      <label for="extName">Beneficiary's Extension (if any)</label>
+      <input id="extName" type="text" placeholder="e.g. JR / SR / II" autocomplete="off" />
+    </div>
+
+    <div>
+      <label for="assistanceType">Type of Assistance</label>
+      <select id="assistanceType" aria-label="Type of Assistance">
+        <option value="" disabled selected>Select type of assistance</option>
+        <option value="Cash Relief Assistance">Cash Relief Assistance</option>
+        <option value="Medical Assistance">Medical Assistance</option>
+        <option value="Food Assistance">Food Assistance</option>
+        <option value="Funeral Assistance">Funeral Assistance</option>
+        <option value="Transportation Assistance">Transportation Assistance</option>
+        <option value="Educational Assistance">Educational Assistance</option>
+      </select>
+    </div>
 
     <button id="scanBtn">Scan QR</button>
     <div id="status"></div>
@@ -29,9 +50,11 @@
         const qrReader = document.getElementById("qr-reader");
         const resultDiv = document.getElementById("result");
         const fullNameDiv = document.getElementById("fullName");
-        const inputFName = document.getElementById("inputFName");
-        const inputLName = document.getElementById("inputLName");
-        const inputSuffix = document.getElementById("inputSuffix");
+        
+        // Input elements
+        const firstNameInput = document.getElementById("firstName");
+        const lastNameInput = document.getElementById("lastName");
+        const extNameInput = document.getElementById("extName");
 
         let isScanning = false;
 
@@ -77,10 +100,10 @@
             try {
                 const data = JSON.parse(decodedText);
                 
-                // Auto-populate the input fields
-                inputFName.value = data.subject?.fName || "";
-                inputLName.value = data.subject?.lName || "";
-                inputSuffix.value = data.subject?.Suffix || "";
+                // Auto-populate the input fields (mapping QR fields to form fields)
+                firstNameInput.value = data.subject?.fName || "";
+                lastNameInput.value = data.subject?.lName || "";
+                extNameInput.value = data.subject?.Suffix || "";
                 
                 // Show result
                 const suffix = data.subject?.Suffix || "";
@@ -105,20 +128,6 @@
         function closeResult() {
             resultDiv.style.display = "none";
             startScanner();
-        }
-
-        function showManualResult() {
-            const fName = inputFName.value || "N/A";
-            const lName = inputLName.value || "N/A";
-            const suffix = inputSuffix.value || "";
-            
-            const fullName = `${fName} ${suffix} ${lName}`.trim();
-            fullNameDiv.textContent = fullName;
-            
-            resultDiv.style.display = "block";
-            qrReader.style.display = "none";
-            statusDiv.style.display = "none";
-            scanBtn.textContent = "Scan QR";
         }
     </script>
 </body>
