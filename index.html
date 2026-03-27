@@ -7,7 +7,6 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-
 :root{
   --blue:#0038A8;
   --blue2:#0b4bd6;
@@ -257,12 +256,12 @@ tbody tr:hover td{background:#f8fafc}
 }
 
 #qr-reader {
-  width: 300px; /* square scanner */
-  height: 300px;
+  width: 80vw;   /* responsive square size */
+  max-width: 400px;
+  aspect-ratio: 1 / 1;  /* ensures height = width */
   background: #000;
   border-radius: 12px;
 }
-
 </style>
 </head>
 
@@ -350,32 +349,32 @@ let qrScanner;
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv";
 let cachedData=null;
 
-// Start QR Scanner with centered overlay
 async function startQRScanner(){
-  // create overlay
   let overlay=document.createElement("div");
   overlay.id="qr-overlay";
   overlay.innerHTML=`<div id="qr-reader"></div>`;
   document.body.appendChild(overlay);
 
+  const container=document.getElementById("qr-reader");
+  const boxSize=Math.min(container.clientWidth, container.clientHeight);
+
   qrScanner=new Html5Qrcode("qr-reader");
   await qrScanner.start(
     { facingMode:"environment" },
-    { fps:10, qrbox:250 }, // square scan box
+    { fps:10, qrbox:boxSize }, // square qrbox matches container
     qrSuccess
   );
 }
 
-// QR Success
 function qrSuccess(decodedText){
   try{
     const data=JSON.parse(decodedText);
     document.getElementById("lastName").value=data.subject.lName||"";
     document.getElementById("firstName").value=data.subject.fName||"";
     document.getElementById("extName").value=data.subject.Suffix||"";
-    
+
     qrScanner.stop();
-    
+
     const overlay=document.getElementById("qr-overlay");
     if(overlay) overlay.remove();
   }catch(e){
@@ -383,7 +382,6 @@ function qrSuccess(decodedText){
   }
 }
 
-// Fetch CSV data
 async function fetchData(){
   if(cachedData) return cachedData;
   const response=await fetch(CSV_URL);
@@ -392,7 +390,6 @@ async function fetchData(){
   return cachedData;
 }
 
-// Parse CSV
 function parseCSV(csv){
   return csv.trim().split("\n").slice(1).map((r,i)=>{
     const c=r.split(",");
@@ -400,7 +397,6 @@ function parseCSV(csv){
   })
 }
 
-// Add 3 months to a date string
 function addThreeMonths(dateStr){
   const date = new Date(dateStr);
   date.setMonth(date.getMonth() + 3);
@@ -410,7 +406,6 @@ function addThreeMonths(dateStr){
   return `${mm}/${dd}/${yyyy}`;
 }
 
-// Check duplicates
 async function checkDuplicate(){
   const last = document.getElementById("lastName").value.trim().toLowerCase();
   const first = document.getElementById("firstName").value.trim().toLowerCase();
@@ -455,7 +450,6 @@ async function checkDuplicate(){
   document.getElementById("results").style.display = "block";
 }
 
-// Show message
 function showMessage(type,title,detail){
   const cls=type==="err"?"msg err":type==="ok"?"msg ok":"msg";
   document.getElementById("message").innerHTML=
@@ -464,7 +458,6 @@ function showMessage(type,title,detail){
   </div>`;
 }
 
-// Reset form
 function resetForm(){
   document.getElementById("lastName").value="";
   document.getElementById("firstName").value="";
@@ -473,7 +466,6 @@ function resetForm(){
   document.getElementById("message").innerHTML="";
   document.getElementById("results").style.display="none";
   document.getElementById("resultsTableWrap").innerHTML="";
-  // remove overlay if exists
   const overlay=document.getElementById("qr-overlay");
   if(overlay) overlay.remove();
 }
