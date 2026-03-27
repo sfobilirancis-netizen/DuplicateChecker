@@ -172,7 +172,7 @@ async function startQRScanner() {
     camerasList = await Html5Qrcode.getCameras();
     if (!camerasList || camerasList.length === 0) throw "No cameras found";
 
-    // Use BACK camera by default
+    // Prefer back camera first
     const backCamera = camerasList.find(c => c.facingMode === "environment") || camerasList[0];
     currentCameraIndex = camerasList.indexOf(backCamera);
 
