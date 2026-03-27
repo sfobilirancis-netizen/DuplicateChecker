@@ -203,15 +203,19 @@ async function startScannerWithCamera(cameraId) {
   });
 
   const config = {
-    fps: 60, // faster scanning
+    fps: 60,
     qrbox: function(viewfinderWidth, viewfinderHeight) {
-        // make the QR box 80% of the smaller screen dimension
         const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-        return { width: minEdge * 0.8, height: minEdge * 0.8 };
+        return { width: minEdge * 0.95, height: minEdge * 0.95 };
     },
     aspectRatio: 1.0,
-    disableFlip: /front/i.test(camerasList[currentCameraIndex].label) // disable flip for front camera
-};
+    videoConstraints: {
+        facingMode: /front/i.test(camerasList[currentCameraIndex].label) ? "user" : "environment",
+        zoom: 2.0,
+        focusMode: "continuous"
+    },
+    disableFlip: /front/i.test(camerasList[currentCameraIndex].label)
+  };
 
   try {
     statusEl.textContent = "📷 Starting camera...";
@@ -220,6 +224,21 @@ async function startScannerWithCamera(cameraId) {
     const video = document.querySelector("#qr-reader video");
     if(video) video.style.objectFit = "contain"; 
     statusEl.textContent = "✅ Ready! Point QR code at scanner";
+
+    // ===== Zoom Slider Event Listener =====
+    const zoomSlider = document.getElementById("zoomSlider");
+    if(zoomSlider){
+      zoomSlider.addEventListener("input", (e)=>{
+        const scale = parseFloat(e.target.value);
+        if(qrScanner && qrScanner.getRunningTrack){
+          const track = qrScanner.getRunningTrack();
+          if(track && track.applyConstraints){
+            track.applyConstraints({ advanced: [{ zoom: scale }] }).catch(()=>{});
+          }
+        }
+      });
+    }
+
   } catch(err) {
     console.error(err);
     statusEl.textContent = "❌ Camera failed to start";
@@ -261,17 +280,19 @@ function removeQROverlay() {
 function showQROverlay() {
   if (!document.getElementById("qr-overlay")) {
     const overlay = document.createElement("div");
-    overlay.id = "qr-overlay";
-    overlay.innerHTML = `
-      <label>📱 Scan Beneficiary QR Code</label>
-      <div id="qr-instructions">Hold steady • Keep QR in frame • Good lighting helps</div>
-      <div id="qr-reader"></div>
-      <div id="qr-status">🔍 Initializing camera...</div>
-      <div class="camera-buttons">
-        <button class="btn btnPrimary" onclick="switchCamera()">🔄 Switch Camera</button>
-        <button class="cancel-btn" onclick="cancelQRScanner()">❌ Cancel</button>
-      </div>
-    `;
+overlay.id = "qr-overlay";
+overlay.innerHTML = `
+  <label>📱 Scan Beneficiary QR Code</label>
+  <div id="qr-instructions">Hold steady • Keep QR in frame • Good lighting helps</div>
+  <div id="qr-reader"></div>
+  <div id="qr-status">🔍 Initializing camera...</div>
+  <div class="camera-buttons">
+    <button class="btn btnPrimary" onclick="switchCamera()">🔄 Switch Camera</button>
+    <button class="cancel-btn" onclick="cancelQRScanner()">❌ Cancel</button>
+  </div>
+  <!-- Zoom slider for manual adjustment -->
+  <input type="range" min="1" max="3" step="0.1" value="1" id="zoomSlider" style="margin-top:12px; width:80%;">
+`;
     document.body.appendChild(overlay);
   }
 }
