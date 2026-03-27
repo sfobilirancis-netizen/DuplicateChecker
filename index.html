@@ -93,13 +93,11 @@ tbody tr:hover td{background:#f8fafc}
   overflow:hidden;
   position: relative;
 }
-/* Force camera video to fill square container */
 #qr-reader video {
   object-fit: cover !important;
   width: 100% !important;
   height: 100% !important;
 }
-
 /* Scanning frame */
 #qr-reader::before {
   content:"";
@@ -118,6 +116,18 @@ tbody tr:hover td{background:#f8fafc}
   50% { box-shadow: 0 0 20px #000000; }
   100% { box-shadow: 0 0 10px #000000; }
 }
+/* Cancel button */
+#qr-overlay button.cancel-btn {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  background: #ef4444;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+#qr-overlay button.cancel-btn:hover { opacity: 0.9; }
 </style>
 </head>
 
@@ -190,9 +200,14 @@ const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4
 let cachedData=null;
 
 async function startQRScanner(){
+  // Create overlay with Cancel button
   let overlay=document.createElement("div");
   overlay.id="qr-overlay";
-  overlay.innerHTML=`<label>Scan QR Code</label><div id="qr-reader"></div>`;
+  overlay.innerHTML=`
+    <label>Scan QR Code</label>
+    <div id="qr-reader"></div>
+    <button class="cancel-btn" onclick="cancelQRScanner()">Cancel</button>
+  `;
   document.body.appendChild(overlay);
 
   const container=document.getElementById("qr-reader");
@@ -206,13 +221,19 @@ async function startQRScanner(){
   );
 }
 
+function cancelQRScanner(){
+  if(qrScanner) qrScanner.stop();
+  const overlay=document.getElementById("qr-overlay");
+  if(overlay) overlay.remove();
+}
+
 function qrSuccess(decodedText){
   try{
     const data=JSON.parse(decodedText);
     document.getElementById("lastName").value=data.subject.lName||"";
     document.getElementById("firstName").value=data.subject.fName||"";
     document.getElementById("extName").value=data.subject.Suffix||"";
-    qrScanner.stop();
+    if(qrScanner) qrScanner.stop();
     const overlay=document.getElementById("qr-overlay");
     if(overlay) overlay.remove();
   }catch(e){
@@ -285,4 +306,4 @@ function resetForm(){
 </script>
 
 </body>
-</html> 
+</html>
