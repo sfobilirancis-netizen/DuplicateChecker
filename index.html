@@ -1,14 +1,13 @@
-```html
 <!DOCTYPE html>
 <html>
 <head>
-<base target="_top" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Duplicate Checker</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
+
 :root{
 --blue:#0038A8;
 --blue2:#0b4bd6;
@@ -24,11 +23,9 @@
 --radius:14px;
 }
 
-*{box-sizing:border-box}
-
 body{
 margin:0;
-font-family:Arial,Helvetica,sans-serif;
+font-family:Arial;
 background:var(--bg);
 color:var(--text);
 }
@@ -51,18 +48,19 @@ padding:12px 0;
 text-align:center;
 }
 
-.titles .rp{font-size:12px}
-.titles .dept{font-size:20px;font-weight:800}
-.titles .unit{font-size:14px}
-
 .ribbon{
 height:6px;
-background:linear-gradient(90deg,var(--blue) 0 33%,var(--red) 33% 66%,var(--yellow) 66% 100%);
+background:linear-gradient(
+90deg,
+var(--blue) 0 33%,
+var(--red) 33% 66%,
+var(--yellow) 66% 100%
+);
 }
 
 .card{
 margin-top:16px;
-background:var(--card);
+background:#fff;
 border:1px solid var(--border);
 border-radius:var(--radius);
 box-shadow:var(--shadow);
@@ -103,7 +101,6 @@ width:100%;
 padding:11px 12px;
 border-radius:12px;
 border:1px solid var(--border);
-font-size:14px;
 }
 
 .actions{
@@ -143,13 +140,46 @@ width:10px;
 height:10px;
 border-radius:50%;
 margin-top:4px;
-background:#94a3b8;
 }
 
 .msg.ok .icon{background:#22c55e}
 .msg.err .icon{background:#ef4444}
 
+.results{
+margin-top:14px;
+border:1px solid var(--border);
+border-radius:var(--radius);
+overflow:hidden;
+}
+
+.resultsHeader{
+padding:12px;
+background:rgba(0,56,168,0.06);
+border-bottom:1px solid var(--border);
+font-weight:700;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+thead th{
+background:var(--blue);
+color:#fff;
+padding:12px;
+font-size:12px;
+text-align:left;
+}
+
+tbody td{
+padding:12px;
+border-bottom:1px solid var(--border);
+font-size:13px;
+}
+
 #qr-reader{margin-top:15px}
+
 </style>
 </head>
 
@@ -158,11 +188,9 @@ background:#94a3b8;
 <header>
 <div class="headerTop">
 <div class="container">
-<div class="titles">
-<div class="rp">Republic of the Philippines</div>
-<div class="dept">Department of Social Welfare and Development</div>
-<div class="unit">Duplicate Checker</div>
-</div>
+<div>Republic of the Philippines</div>
+<div><strong>Department of Social Welfare and Development</strong></div>
+<div>Duplicate Checker</div>
 </div>
 </div>
 <div class="ribbon"></div>
@@ -181,41 +209,39 @@ background:#94a3b8;
 <div class="grid">
 
 <div>
-<label>Beneficiary's Last Name</label>
-<input id="lastName" type="text">
+<label>Last Name</label>
+<input id="lastName">
 </div>
 
 <div>
-<label>Beneficiary's First Name</label>
-<input id="firstName" type="text">
+<label>First Name</label>
+<input id="firstName">
 </div>
 
 <div>
-<label>Beneficiary's Extension</label>
-<input id="extName" type="text">
+<label>Extension</label>
+<input id="extName">
 </div>
 
 <div>
 <label>Type of Assistance</label>
 <select id="assistanceType">
 <option value="">Select type</option>
-<option value="Cash Relief Assistance">Cash Relief Assistance</option>
-<option value="Medical Assistance">Medical Assistance</option>
-<option value="Food Assistance">Food Assistance</option>
-<option value="Funeral Assistance">Funeral Assistance</option>
-<option value="Transportation Assistance">Transportation Assistance</option>
-<option value="Educational Assistance">Educational Assistance</option>
+<option>Cash Relief Assistance</option>
+<option>Medical Assistance</option>
+<option>Food Assistance</option>
+<option>Funeral Assistance</option>
+<option>Transportation Assistance</option>
+<option>Educational Assistance</option>
 </select>
 </div>
 
 <div class="span2">
 <label>Actions</label>
 <div class="actions">
-
 <button class="btnPrimary" onclick="startQRScanner()">Scan QR</button>
 <button onclick="checkDuplicate()">Check Duplicate</button>
 <button onclick="resetForm()">Reset</button>
-
 </div>
 </div>
 
@@ -223,6 +249,11 @@ background:#94a3b8;
 
 <div id="qr-reader"></div>
 <div id="message"></div>
+
+<div id="results" class="results" style="display:none;">
+<div class="resultsHeader">Match Results</div>
+<div id="resultsTableWrap"></div>
+</div>
 
 </div>
 </div>
@@ -237,9 +268,6 @@ async function startQRScanner(){
 
 const qrContainer=document.getElementById("qr-reader");
 qrContainer.innerHTML="";
-showMessage("","","");
-
-try{
 
 qrScanner=new Html5Qrcode("qr-reader");
 
@@ -249,20 +277,6 @@ await qrScanner.start(
 qrSuccess
 );
 
-}catch(error){
-
-if(error.message.includes("Permission")){
-showMessage("err","Camera permission denied","Please allow camera access.");
-}
-else if(error.message.includes("NotFound")){
-showMessage("err","No camera found","This device has no camera.");
-}
-else{
-showMessage("err","Scanner failed","Use HTTPS and allow camera.");
-}
-
-}
-
 }
 
 function qrSuccess(decodedText){
@@ -271,8 +285,6 @@ try{
 
 const data=JSON.parse(decodedText);
 
-if(data.subject){
-
 document.getElementById("lastName").value=data.subject.lName||"";
 document.getElementById("firstName").value=data.subject.fName||"";
 document.getElementById("extName").value=data.subject.Suffix||"";
@@ -280,11 +292,9 @@ document.getElementById("extName").value=data.subject.Suffix||"";
 qrScanner.stop();
 document.getElementById("qr-reader").innerHTML="";
 
-}
-
 }catch(e){
 
-showMessage("err","Invalid QR format","Unable to read QR.");
+showMessage("err","Invalid QR format","Unable to read QR");
 
 }
 
@@ -300,27 +310,31 @@ if(cachedData) return cachedData;
 
 const response=await fetch(CSV_URL);
 const csvText=await response.text();
+
 cachedData=parseCSV(csvText);
 
 return cachedData;
 
 }
 
-function parseCSV(csvText){
+function parseCSV(csv){
 
-const lines=csvText.trim().split('\n').slice(1);
+const rows=csv.trim().split("\n").slice(1);
 
-return lines.map(line=>{
+return rows.map((r,i)=>{
 
-const cols=line.split(",");
+const c=r.split(",");
 
 return{
-lastName:cols[1],
-firstName:cols[2],
-assistanceType:cols[4]
+date:c[0],
+last:c[1],
+first:c[2],
+ext:c[3],
+type:c[4],
+row:i+2
 }
 
-});
+})
 
 }
 
@@ -331,7 +345,7 @@ const first=document.getElementById("firstName").value.trim().toLowerCase();
 const type=document.getElementById("assistanceType").value.trim().toLowerCase();
 
 if(!last||!first||!type){
-showMessage("err","Missing Information","Fill Last Name, First Name and Assistance Type.");
+showMessage("err","Missing Information","Fill required fields");
 return;
 }
 
@@ -339,26 +353,58 @@ showMessage("msg","Searching","Checking records...");
 
 const data=await fetchData();
 
-const match=data.find(r=>
-r.lastName.toLowerCase()==last &&
-r.firstName.toLowerCase()==first &&
-r.assistanceType.toLowerCase()==type
+const matches=data.filter(r=>
+r.last.toLowerCase()==last &&
+r.first.toLowerCase()==first &&
+r.type.toLowerCase()==type
 );
 
-if(match){
-showMessage("err","Duplicate Found","This beneficiary already received this assistance.");
-}else{
-showMessage("ok","No Duplicate Found","Beneficiary may proceed for assistance.");
+if(matches.length===0){
+
+showMessage("ok","No duplicate found","Beneficiary may proceed");
+document.getElementById("results").style.display="none";
+
+return;
+
 }
+
+showMessage("err","Duplicate Found",matches.length+" record(s) found");
+
+let html=`<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Last</th>
+<th>First</th>
+<th>Ext</th>
+<th>Type</th>
+<th>Row #</th>
+</tr>
+</thead>
+<tbody>`;
+
+matches.forEach(m=>{
+
+html+=`
+<tr>
+<td>${m.date}</td>
+<td>${m.last}</td>
+<td>${m.first}</td>
+<td>${m.ext}</td>
+<td>${m.type}</td>
+<td>${m.row}</td>
+</tr>`;
+
+})
+
+html+=`</tbody></table>`;
+
+document.getElementById("resultsTableWrap").innerHTML=html;
+document.getElementById("results").style.display="block";
 
 }
 
 function showMessage(type,title,detail){
-
-if(!title){
-document.getElementById("message").innerHTML="";
-return;
-}
 
 const cls=type==="err"?"msg err":type==="ok"?"msg ok":"msg";
 
@@ -367,7 +413,7 @@ document.getElementById("message").innerHTML=
 <div class="icon"></div>
 <div>
 <strong>${title}</strong>
-${detail?`<div style="font-size:12px;color:#475569">${detail}</div>`:""}
+<div style="font-size:12px">${detail}</div>
 </div>
 </div>`;
 
@@ -379,8 +425,10 @@ document.getElementById("lastName").value="";
 document.getElementById("firstName").value="";
 document.getElementById("extName").value="";
 document.getElementById("assistanceType").value="";
+
+document.getElementById("message").innerHTML="";
+document.getElementById("results").style.display="none";
 document.getElementById("qr-reader").innerHTML="";
-showMessage("","","");
 
 }
 
@@ -388,4 +436,3 @@ showMessage("","","");
 
 </body>
 </html>
-```
