@@ -202,12 +202,17 @@ async function startScannerWithCamera(cameraId) {
     experimentalFeatures: { useBarCodeDetectorIfSupported: true }
   });
 
-  const config = { fps: 30, qrbox: { width: 500, height: 500 }, aspectRatio: 1.0, disableFlip: false };
+  const config = { 
+    fps: 30, 
+    qrbox: { width: 300, height: 300 }, // easier to scan from far
+    aspectRatio: 1.0, 
+    disableFlip: false,
+    videoConstraints: { width: {ideal:1280}, height:{ideal:720}, facingMode:"environment" }
+  };
 
   try {
     statusEl.textContent = "📷 Starting camera...";
     await qrScanner.start(cameraId, config, qrSuccess, qrErrorCallback, qrStatusCallback);
-
     const video = document.querySelector("#qr-reader video");
     if(video) video.style.objectFit = "contain"; 
     statusEl.textContent = "✅ Ready! Point QR code at scanner";
@@ -216,6 +221,21 @@ async function startScannerWithCamera(cameraId) {
     statusEl.textContent = "❌ Camera failed to start";
   }
 }
+
+// Optional: try to request higher resolution if available
+const cameraConstraints = { 
+  facingMode: "environment",
+  width: { ideal: 1280 }, 
+  height: { ideal: 720 } 
+};
+
+await qrScanner.start(
+  cameraId,
+  { ...config, videoConstraints: cameraConstraints },
+  qrSuccess, 
+  qrErrorCallback, 
+  qrStatusCallback
+);
 
 function switchCamera() {
   if (!camerasList || camerasList.length < 2) return;
