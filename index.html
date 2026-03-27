@@ -7,7 +7,8 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-:root{
+/* ===== COLORS & VARIABLES ===== */
+:root {
   --blue:#0038A8;
   --blue2:#0b4bd6;
   --red:#CE1126;
@@ -22,322 +23,288 @@
   --radius:14px;
 }
 
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);}
-.container{max-width:1120px;margin:auto;padding:16px;}
-header{background:#fff;border-bottom:4px solid var(--blue);}
-.headerTop{background:linear-gradient(90deg,var(--blue),var(--blue2));color:#fff;padding:12px 0;text-align:center;}
-.titles .rp{font-size:12px}
-.titles .dept{font-size:20px;font-weight:800}
-.titles .unit{font-size:14px}
-.ribbon{height:6px;background:linear-gradient(90deg,var(--blue) 0 33%,var(--red) 33% 66%,var(--yellow) 66% 100%);}
-.card{margin-top:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
-.cardHeader{padding:14px 16px;border-bottom:1px solid var(--border);background:#fbfdff;}
-.cardBody{padding:16px;}
-.grid{display:grid;grid-template-columns:1fr;gap:12px;}
-@media(min-width:720px){.grid{grid-template-columns:repeat(2,1fr)}.span2{grid-column:span 2}}
-@media(min-width:1024px){.grid{grid-template-columns:repeat(4,1fr)}.span2{grid-column:span 2}.span4{grid-column:span 4}}
-label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;}
-input,select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--border);background:#fff;font-size:14px;outline:none;}
-input:focus,select:focus{border-color:rgba(0,56,168,0.55);box-shadow:0 0 0 4px rgba(0,56,168,0.14);}
-.actions{display:flex;gap:10px;flex-wrap:wrap;}
-button.btn {border: 1px solid var(--border);background: #fff;color: var(--text);padding: 10px 14px;border-radius: 12px;cursor: pointer;font-weight: 700;font-size: 13px;text-align: center;transition: transform 0.08s ease, opacity 0.15s ease;}
-button.btn:active { transform: translateY(1px); }
-button.btnPrimary {background: linear-gradient(135deg, var(--blue), var(--blue2));border-color: rgba(0, 56, 168, 0.35);color: #fff !important;font-weight: 700;font-size: 14px;text-align: center;padding: 10px 16px;white-space: nowrap;}
-button.btnPrimary:hover { opacity: 0.95; }
-button.btnGhost {background: transparent;color: var(--text);border: 1px solid var(--border);font-weight: 700;font-size: 13px;padding: 10px 14px;cursor: pointer;text-align: center;}
-button.btnGhost:hover { background: #f1f5f9; }
-.msg{margin-top:14px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;}
-.msg.ok{background:#f0fdf4;border-color:#bbf7d0}
-.msg.err{background:#fef2f2;border-color:#fecaca}
-.msg .icon{width:10px;height:10px;border-radius:50%;margin-top:4px;}
-.msg.ok .icon{background:#22c55e}
-.msg.err .icon{background:#ef4444}
-.msg strong{font-size:13px}
-.msg .small{font-size:12px;color:var(--muted);margin-top:2px}
-.results{margin-top:14px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:#fff;}
-.resultsHeader{padding:12px 14px;border-bottom:1px solid var(--border);background:linear-gradient(90deg,rgba(0,56,168,0.06),rgba(206,17,38,0.06));display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700;}
-.pill{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#f8fafc;font-size:12px;font-weight:700;color:#0f172a;white-space:nowrap;}
-.pill.type{border-color:rgba(206,17,38,0.25);background:rgba(206,17,38,0.08);color:#7f1d1d;}
-.tableWrap{overflow:auto}
-table{width:100%;border-collapse:collapse;min-width:820px}
-thead th{position:sticky;top:0;background:var(--blue);color:#fff;padding:12px;font-size:12px;text-align:left;}
-tbody td{padding:12px;border-bottom:1px solid var(--border);font-size:13px}
-tbody tr:hover td{background:#f8fafc}
+/* ===== GLOBAL ===== */
+* { box-sizing:border-box; }
+body { margin:0; font-family:Arial,Helvetica,sans-serif; background:var(--bg); color:var(--text); }
+.container { max-width:1120px; margin:auto; padding:16px; }
 
-/* QR Scanner Overlay */
+/* ===== HEADER ===== */
+header { background:#fff; border-bottom:4px solid var(--blue); }
+.headerTop { background:linear-gradient(90deg,var(--blue),var(--blue2)); color:#fff; padding:12px 0; text-align:center; }
+.titles .rp { font-size:12px; }
+.titles .dept { font-size:20px; font-weight:800; }
+.titles .unit { font-size:14px; }
+.ribbon { height:6px; background:linear-gradient(90deg,var(--blue) 0 33%,var(--red) 33% 66%,var(--yellow) 66% 100%); }
+
+/* ===== CARD ===== */
+.card { margin-top:16px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+.cardHeader { padding:14px 16px; border-bottom:1px solid var(--border); background:#fbfdff; }
+.cardBody { padding:16px; }
+.grid { display:grid; grid-template-columns:1fr; gap:12px; }
+@media(min-width:720px) { .grid { grid-template-columns:repeat(2,1fr); } .span2 { grid-column:span 2; } }
+@media(min-width:1024px) { .grid { grid-template-columns:repeat(4,1fr); } .span2 { grid-column:span 2; } .span4 { grid-column:span 4; } }
+
+/* ===== FORM ELEMENTS ===== */
+label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+input, select { width:100%; padding:11px 12px; border-radius:12px; border:1px solid var(--border); background:#fff; font-size:14px; outline:none; }
+input:focus, select:focus { border-color:rgba(0,56,168,0.55); box-shadow:0 0 0 4px rgba(0,56,168,0.14); }
+
+/* ===== BUTTONS ===== */
+.actions { display:flex; gap:10px; flex-wrap:wrap; }
+button.btn { border:1px solid var(--border); background:#fff; color:var(--text); padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700; font-size:13px; text-align:center; transition: transform 0.08s ease, opacity 0.15s ease; }
+button.btn:active { transform:translateY(1px); }
+button.btnPrimary { background:linear-gradient(135deg, var(--blue), var(--blue2)); border-color: rgba(0,56,168,0.35); color:#fff !important; font-weight:700; font-size:14px; padding:10px 16px; }
+button.btnPrimary:hover { opacity:0.95; }
+button.btnGhost { background:transparent; color:var(--text); border:1px solid var(--border); font-weight:700; font-size:13px; padding:10px 14px; cursor:pointer; }
+button.btnGhost:hover { background:#f1f5f9; }
+
+/* ===== MESSAGES ===== */
+.msg { margin-top:14px; padding:12px 14px; border-radius:12px; border:1px solid var(--border); display:flex; gap:10px; align-items:flex-start; }
+.msg.ok { background:#f0fdf4; border-color:#bbf7d0; }
+.msg.err { background:#fef2f2; border-color:#fecaca; }
+.msg .icon { width:10px; height:10px; border-radius:50%; margin-top:4px; }
+.msg.ok .icon { background:#22c55e; }
+.msg.err .icon { background:#ef4444; }
+.msg strong { font-size:13px; }
+.msg .small { font-size:12px; color:var(--muted); margin-top:2px; }
+
+/* ===== RESULTS TABLE ===== */
+.results { margin-top:14px; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; background:#fff; }
+.resultsHeader { padding:12px 14px; border-bottom:1px solid var(--border); background:linear-gradient(90deg,rgba(0,56,168,0.06),rgba(206,17,38,0.06)); display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:700; }
+.pill { display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:#f8fafc; font-size:12px; font-weight:700; color:#0f172a; white-space:nowrap; }
+.pill.type { border-color:rgba(206,17,38,0.25); background:rgba(206,17,38,0.08); color:#7f1d1d; }
+.tableWrap { overflow:auto; }
+table { width:100%; border-collapse:collapse; min-width:820px; }
+thead th { position:sticky; top:0; background:var(--blue); color:#fff; padding:12px; font-size:12px; text-align:left; }
+tbody td { padding:12px; border-bottom:1px solid var(--border); font-size:13px; }
+tbody tr:hover td { background:#f8fafc; }
+
+/* ===== QR SCANNER OVERLAY ===== */
 #qr-overlay {
-  position: fixed;
-  top: 0; left:0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.85);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 20px;
-  box-sizing: border-box;
+  position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.85);
+  display:flex; flex-direction: column; justify-content:center; align-items:center; z-index:9999; padding:20px; box-sizing:border-box;
 }
-#qr-overlay label {
-  color: #fff;
-  font-weight: 700;
-  font-size: 20px;
-  margin-bottom: 16px;
-  text-align: center;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-}
-#qr-instructions {
-  color: #fff;
-  font-size: 14px;
-  margin-bottom: 12px;
-  text-align: center;
-  background: rgba(255,255,255,0.1);
-  padding: 12px 20px;
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-}
-#qr-reader {
-  width: 90vw;
-  max-width: 500px;
-  max-height: 70vh;
-  aspect-ratio:1/1;
-  border-radius: 16px;
-  background:#000;
-  overflow:hidden;
-  position: relative;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-}
-#qr-reader video {
-  object-fit: cover !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-/* Larger scanning frame */
+#qr-overlay label { color:#fff; font-weight:700; font-size:20px; margin-bottom:16px; text-align:center; text-shadow:0 2px 4px rgba(0,0,0,0.5); }
+#qr-instructions { color:#fff; font-size:14px; margin-bottom:12px; text-align:center; background: rgba(255,255,255,0.1); padding:12px 20px; border-radius:12px; backdrop-filter:blur(10px); }
+#qr-reader { width:90vw; max-width:500px; max-height:70vh; aspect-ratio:1/1; border-radius:16px; background:#000; overflow:hidden; position:relative; box-shadow:0 20px 40px rgba(0,0,0,0.5); }
+#qr-reader video { object-fit: cover !important; width:100% !important; height:100% !important; }
 #qr-reader::before {
   content:"";
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  width:85%; height:85%;
-  border: 3px solid #00ff88;
-  border-top-color: transparent;
-  border-left-color: transparent;
-  border-radius: 12px;
-  box-sizing:border-box;
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:85%; height:85%; border:3px solid #00ff88; border-top-color:transparent; border-left-color:transparent; border-radius:12px; box-sizing:border-box;
   pointer-events:none;
-  box-shadow: 0 0 0 3px rgba(0,255,136,0.5);
+  box-shadow:0 0 0 3px rgba(0,255,136,0.5);
   animation: scanGlow 2s infinite;
 }
 @keyframes scanGlow {
-  0%, 100% { 
-    box-shadow: 0 0 0 3px rgba(0,255,136,0.5), 0 0 20px rgba(0,255,136,0.3);
-  }
-  50% { 
-    box-shadow: 0 0 0 3px rgba(0,255,136,0.8), 0 0 30px rgba(0,255,136,0.6);
-  }
+  0%,100% { box-shadow:0 0 0 3px rgba(0,255,136,0.5),0 0 20px rgba(0,255,136,0.3); }
+  50% { box-shadow:0 0 0 3px rgba(0,255,136,0.8),0 0 30px rgba(0,255,136,0.6); }
 }
-/* QR Status */
-#qr-status {
-  margin-top: 16px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-  min-height: 20px;
-}
-/* Cancel & Switch buttons */
-#qr-overlay button.cancel-btn {
-  margin-top: 12px;
-  margin-right: 8px;
-  padding: 12px 24px;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: #fff;
-  font-weight: 700;
-  font-size: 16px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(239,68,68,0.4);
-}
-#qr-overlay button.cancel-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-#qr-overlay button.cancel-btn:active { transform: translateY(0); }
+#qr-status { margin-top:16px; padding:10px 16px; border-radius:12px; background:rgba(255,255,255,0.15); color:#fff; font-size:14px; font-weight:500; text-align:center; min-height:20px; }
+#qr-overlay button.cancel-btn { margin-top:20px; padding:12px 24px; border-radius:12px; border:none; background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; font-weight:700; font-size:16px; cursor:pointer; box-shadow:0 4px 12px rgba(239,68,68,0.4); }
+#qr-overlay button.cancel-btn:hover { opacity:0.9; transform:translateY(-1px); }
+#qr-overlay button.cancel-btn:active { transform:translateY(0); }
+#qr-overlay .btnPrimary { margin:0; }
+
+/* ===== SMALL BUTTONS ROW ===== */
+#qr-overlay .camera-buttons { display:flex; gap:10px; justify-content:center; margin-top:12px; }
+
 </style>
 </head>
 
 <body>
 
 <header>
-<div class="headerTop">
-<div class="container">
-<div class="titles">
-<div class="rp">Republic of the Philippines</div>
-<div class="dept">Department of Social Welfare and Development</div>
-<div class="unit">Duplicate Checker</div>
-</div>
-</div>
-</div>
-<div class="ribbon"></div>
+  <div class="headerTop">
+    <div class="container">
+      <div class="titles">
+        <div class="rp">Republic of the Philippines</div>
+        <div class="dept">Department of Social Welfare and Development</div>
+        <div class="unit">Duplicate Checker</div>
+      </div>
+    </div>
+  </div>
+  <div class="ribbon"></div>
 </header>
 
 <main class="container">
-<div class="card">
-<div class="cardHeader"><strong>Beneficiary Duplicate Validation</strong></div>
-<div class="cardBody">
-<div class="grid">
-<div>
-<label>Beneficiary's Last Name</label>
-<input id="lastName" placeholder="Enter beneficiary's last name">
-</div>
-<div>
-<label>Beneficiary's First Name</label>
-<input id="firstName" placeholder="Enter beneficiary's first name">
-</div>
-<div>
-<label>Beneficiary's Extension (if any)</label>
-<input id="extName" placeholder="e.g. JR / SR / II">
-</div>
-<div>
-<label>Type of Assistance</label>
-<select id="assistanceType">
-<option value="">Select type</option>
-<option>Cash Relief Assistance</option>
-<option>Medical Assistance</option>
-<option>Food Assistance</option>
-<option>Funeral Assistance</option>
-<option>Transportation Assistance</option>
-<option>Educational Assistance</option>
-</select>
-</div>
-<div class="span2">
-<label>Actions</label>
-<div class="actions">
-<button class="btn btnPrimary" onclick="startQRScanner()">🔍 Scan QR</button>
-<button class="btn btnPrimary" onclick="checkDuplicate()">Check Duplicate</button>
-<button class="btn" onclick="resetForm()">Reset</button>
-</div>
-</div>
-</div>
+  <div class="card">
+    <div class="cardHeader"><strong>Beneficiary Duplicate Validation</strong></div>
+    <div class="cardBody">
+      <div class="grid">
+        <div>
+          <label>Beneficiary's Last Name</label>
+          <input id="lastName" placeholder="Enter beneficiary's last name">
+        </div>
+        <div>
+          <label>Beneficiary's First Name</label>
+          <input id="firstName" placeholder="Enter beneficiary's first name">
+        </div>
+        <div>
+          <label>Beneficiary's Extension (if any)</label>
+          <input id="extName" placeholder="e.g. JR / SR / II">
+        </div>
+        <div>
+          <label>Type of Assistance</label>
+          <select id="assistanceType">
+            <option value="">Select type</option>
+            <option>Cash Relief Assistance</option>
+            <option>Medical Assistance</option>
+            <option>Food Assistance</option>
+            <option>Funeral Assistance</option>
+            <option>Transportation Assistance</option>
+            <option>Educational Assistance</option>
+          </select>
+        </div>
+        <div class="span2">
+          <label>Actions</label>
+          <div class="actions">
+            <button class="btn btnPrimary" onclick="startQRScanner()">🔍 Scan QR</button>
+            <button class="btn btnPrimary" onclick="checkDuplicate()">Check Duplicate</button>
+            <button class="btn" onclick="resetForm()">Reset</button>
+          </div>
+        </div>
+      </div>
 
-<div id="message"></div>
-<div id="results" class="results" style="display:none;">
-<div class="resultsHeader">Match Results</div>
-<div class="tableWrap" id="resultsTableWrap"></div>
-</div>
-</div>
-</div>
+      <div id="message"></div>
+      <div id="results" class="results" style="display:none;">
+        <div class="resultsHeader">Match Results</div>
+        <div class="tableWrap" id="resultsTableWrap"></div>
+      </div>
+    </div>
+  </div>
 </main>
 
 <script>
+/* ===== GLOBAL VARIABLES ===== */
 let qrScanner;
-let currentCamera="user"; // front camera first
-let camerasList=[];
+let camerasList = [];
+let currentCameraIndex = 0;
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv";
-let cachedData=null;
+let cachedData = null;
 
-async function startQRScanner(){
-  try { camerasList = await Html5Qrcode.getCameras(); } 
-  catch(e){ showMessage("err","Camera Access Denied","Please enable camera"); return; }
-  if(camerasList.length===0){ showMessage("err","No Camera Found","No camera detected."); return; }
+/* ===== QR SCANNER ===== */
+async function startQRScanner() {
+  try {
+    camerasList = await Html5Qrcode.getCameras();
+    if (!camerasList || camerasList.length === 0) throw "No cameras found";
 
-  let overlay=document.createElement("div");
-  overlay.id="qr-overlay";
-  overlay.innerHTML=`
-    <label>📱 Scan Beneficiary QR Code</label>
-    <div id="qr-instructions">Hold steady • Keep QR in frame • Good lighting helps</div>
-    <div id="qr-reader"></div>
-    <div id="qr-status">🔍 Initializing camera...</div>
-    <div style="margin-top:12px;">
-      <button id="switch-camera-btn" class="cancel-btn">🔄 Switch Camera</button>
-      <button class="cancel-btn" onclick="cancelQRScanner()">❌ Cancel</button>
-    </div>
-  `;
-  document.body.appendChild(overlay);
+    // Front camera first
+    const frontCamera = camerasList.find(c => c.facingMode === "user") || camerasList[0];
+    currentCameraIndex = camerasList.indexOf(frontCamera);
 
-  const container=document.getElementById("qr-reader");
-  const statusEl=document.getElementById("qr-status");
-  const switchBtn=document.getElementById("switch-camera-btn");
-
-  qrScanner=new Html5Qrcode("qr-reader", { formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE] });
-
-  const config = { fps: 30, qrbox: { width: 350, height: 350 }, aspectRatio:1, disableFlip:false, rememberLastUsedCamera:true };
-
-  async function startCamera(facingMode){
-    try {
-      statusEl.textContent="📷 Starting camera...";
-      const cam=camerasList.find(c=>(facingMode==="environment"&&c.facingMode==="environment")||(facingMode==="user"&&c.facingMode==="user"))||camerasList[0];
-      await qrScanner.start(cam.id, config, qrSuccess, qrErrorCallback, qrStatusCallback);
-      statusEl.textContent="✅ Ready! Point QR code at scanner";
-      currentCamera=facingMode;
-    } catch(err){ console.error(err); statusEl.textContent="❌ Camera failed to start"; showMessage("err","Camera Error","Check permissions/lighting"); }
+    showQROverlay();
+    await startScannerWithCamera(camerasList[currentCameraIndex].id);
+  } catch (e) {
+    console.error(e);
+    showMessage("err", "Camera Error", "No camera found or permission denied");
   }
-
-  await startCamera("user"); // front camera first
-  switchBtn.onclick=()=>{ qrScanner.stop().then(()=>{ startCamera(currentCamera==="user"?"environment":"user"); }).catch(console.error); };
 }
 
-function qrStatusCallback(decodedText, decodedResult){ document.getElementById("qr-status").textContent="🎯 Processing..."; }
-function qrErrorCallback(err){ if(err && err!=="No MultiFormat Readers were able to detect the code.") console.warn(err); }
-function cancelQRScanner(){ if(qrScanner && qrScanner.getState()!==Html5QrcodeScannerState.NOT_STARTED){ qrScanner.stop().then(()=>{ document.getElementById("qr-overlay")?.remove(); }).catch(console.error); } else { document.getElementById("qr-overlay")?.remove(); } }
+async function startScannerWithCamera(cameraId) {
+  const statusEl = document.getElementById("qr-status");
+  qrScanner = new Html5Qrcode("qr-reader", {
+    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+  });
 
-function qrSuccess(decodedText){
-  try{
-    const data=JSON.parse(decodedText);
-    document.getElementById("lastName").value=data.subject?.lName||"";
-    document.getElementById("firstName").value=data.subject?.fName||"";
-    document.getElementById("extName").value=data.subject?.Suffix||"";
-    showMessage("ok","QR Scanned Successfully!","Beneficiary data loaded");
-    setTimeout(()=>{ if(qrScanner) qrScanner.stop(); document.getElementById("qr-overlay")?.remove(); },500);
-  }catch(e){ showMessage("err","Invalid QR Format","QR doesn't contain beneficiary data"); document.getElementById("qr-status").textContent="❌ Invalid QR - try again"; }
+  const config = { fps:30, qrbox:{width:350,height:350}, aspectRatio:1.0, disableFlip:false };
+
+  try {
+    statusEl.textContent = "📷 Starting camera...";
+    await qrScanner.start(cameraId, config, qrSuccess, qrErrorCallback, qrStatusCallback);
+    statusEl.textContent = "✅ Ready! Point QR code at scanner";
+  } catch(err) {
+    console.error(err);
+    statusEl.textContent = "❌ Camera failed to start";
+  }
 }
 
-async function fetchData(){ if(cachedData) return cachedData; const resp=await fetch(CSV_URL); const txt=await resp.text(); cachedData=parseCSV(txt); return cachedData; }
-function parseCSV(csv){ return csv.trim().split("\n").slice(1).map((r,i)=>{ const c=r.split(","); return{date:c[0],last:c[1],first:c[2],ext:c[3],type:c[4],row:i+2} }) }
-function addThreeMonths(dateStr){ const date=new Date(dateStr); date.setMonth(date.getMonth()+3); return `${String(date.getMonth()+1).padStart(2,"0")}/${String(date.getDate()).padStart(2,"0")}/${date.getFullYear()}`; }
+function switchCamera() {
+  if (!camerasList || camerasList.length < 2) return;
+  currentCameraIndex = (currentCameraIndex + 1) % camerasList.length;
+  const nextCameraId = camerasList[currentCameraIndex].id;
+  if (qrScanner) qrScanner.stop().then(() => startScannerWithCamera(nextCameraId)).catch(console.error);
+}
 
-async function checkDuplicate(){
-  const last=document.getElementById("lastName").value.trim().toLowerCase();
-  const first=document.getElementById("firstName").value.trim().toLowerCase();
-  const type=document.getElementById("assistanceType").value.trim().toLowerCase();
-  if(!last||!first||!type){ showMessage("err","Missing Information","Fill required fields"); return; }
+function cancelQRScanner() {
+  if(qrScanner) qrScanner.stop().then(() => removeQROverlay()).catch(console.error);
+  else removeQROverlay();
+}
+
+function removeQROverlay() {
+  const overlay = document.getElementById("qr-overlay");
+  if(overlay) overlay.remove();
+}
+
+function showQROverlay() {
+  if (!document.getElementById("qr-overlay")) {
+    const overlay = document.createElement("div");
+    overlay.id = "qr-overlay";
+    overlay.innerHTML = `
+      <label>📱 Scan Beneficiary QR Code</label>
+      <div id="qr-instructions">Hold steady • Keep QR in frame • Good lighting helps</div>
+      <div id="qr-reader"></div>
+      <div id="qr-status">🔍 Initializing camera...</div>
+      <div class="camera-buttons">
+        <button class="btn btnPrimary" onclick="switchCamera()">🔄 Switch Camera</button>
+        <button class="cancel-btn" onclick="cancelQRScanner()">❌ Cancel</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+}
+
+function qrSuccess(decodedText) {
+  try {
+    const data = JSON.parse(decodedText);
+    document.getElementById("lastName").value = data.subject?.lName || "";
+    document.getElementById("firstName").value = data.subject?.fName || "";
+    document.getElementById("extName").value = data.subject?.Suffix || "";
+    showMessage("ok", "QR Scanned Successfully!", "Beneficiary data loaded");
+    setTimeout(cancelQRScanner, 500);
+  } catch(e) {
+    showMessage("err","Invalid QR Format","QR doesn't contain beneficiary data");
+    document.getElementById("qr-status").textContent = "❌ Invalid QR - try again";
+  }
+}
+
+function qrErrorCallback(err) { if(err) console.warn("QR Error:", err); }
+function qrStatusCallback() { document.getElementById("qr-status").textContent = "🎯 Processing..."; }
+
+/* ===== CSV DATA & DUPLICATE CHECK ===== */
+async function fetchData() {
+  if (cachedData) return cachedData;
+  const response = await fetch(CSV_URL);
+  const csvText = await response.text();
+  cachedData = parseCSV(csvText);
+  return cachedData;
+}
+
+function parseCSV(csv) {
+  return csv.trim().split("\n").slice(1).map((r,i)=>{
+    const c=r.split(",");
+    return {date:c[0], last:c[1], first:c[2], ext:c[3], type:c[4], row:i+2}
+  });
+}
+
+function addThreeMonths(dateStr){
+  const date = new Date(dateStr);
+  date.setMonth(date.getMonth() + 3);
+  const mm = String(date.getMonth() + 1).padStart(2,"0");
+  const dd = String(date.getDate()).padStart(2,"0");
+  const yyyy = date.getFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+}
+
+async function checkDuplicate() {
+  const last = document.getElementById("lastName").value.trim().toLowerCase();
+  const first = document.getElementById("firstName").value.trim().toLowerCase();
+  const type = document.getElementById("assistanceType").value.trim().toLowerCase();
+  if (!last || !first || !type) { showMessage("err","Missing Information","Fill required fields"); return; }
 
   showMessage("msg","Searching","Checking records...");
-  const data=await fetchData();
-  const matches=data.filter(r=>r.last.toLowerCase()===last && r.first.toLowerCase()===first && r.type.toLowerCase()===type);
-  if(matches.length===0){ showMessage("ok","No duplicate found","Beneficiary may proceed"); document.getElementById("results").style.display="none"; return; }
-
-  showMessage("err","Duplicate Found",matches.length+" record(s) found");
-  let html=`<table><thead><tr><th>Date of Claim</th><th>Last</th><th>First</th><th>Ext</th><th>Type</th><th>Next Claim</th></tr></thead><tbody>`;
-  matches.forEach(m=>{ const nextClaim=addThreeMonths(m.date); html+=`<tr><td>${m.date}</td><td><span class="pill">${m.last}</span></td><td><span class="pill">${m.first}</span></td><td><span class="pill">${m.ext}</span></td><td><span class="pill type">${m.type}</span></td><td><span class="pill">${nextClaim}</span></td></tr>`; });
-  html+=`</tbody></table>`;
-  document.getElementById("resultsTableWrap").innerHTML = html;
-  document.getElementById("results").style.display = "block";
-}
-
-function showMessage(type, title, small = "") {
-  const msgDiv = document.getElementById("message");
-  msgDiv.innerHTML = `<div class="msg ${type}">
-      <div class="icon"></div>
-      <div>
-        <strong>${title}</strong>
-        ${small ? `<div class="small">${small}</div>` : ""}
-      </div>
-    </div>`;
-}
-
-function resetForm() {
-  document.getElementById("lastName").value = "";
-  document.getElementById("firstName").value = "";
-  document.getElementById("extName").value = "";
-  document.getElementById("assistanceType").value = "";
-  document.getElementById("results").style.display = "none";
-  document.getElementById("message").innerHTML = "";
-}
-</script>
-
-</body>
-</html>
+  const data = await fetchData();
+  const matches = data.filter(r => r.last.toLowerCase()===last && r.first.toLowerCase()===first && r.type.toLowerCase()===type);
+  if(matches.length === 0){ 
+    showMessage("ok","No duplicate found","Beneficiary may proceed"); 
+    document.getElementById("
