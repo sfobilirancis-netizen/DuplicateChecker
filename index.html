@@ -307,4 +307,68 @@ async function checkDuplicate() {
   const matches = data.filter(r => r.last.toLowerCase()===last && r.first.toLowerCase()===first && r.type.toLowerCase()===type);
   if(matches.length === 0){ 
     showMessage("ok","No duplicate found","Beneficiary may proceed"); 
-    document.getElementById("
+    document.getElementById(    "results").style.display = "none";
+    return; 
+  }
+
+  // Display matches
+  showMessage("err", "Duplicate Found", `${matches.length} record(s) found`);
+  const tableWrap = document.getElementById("resultsTableWrap");
+  tableWrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Date of Claim</th>
+          <th>Last Name</th>
+          <th>First Name</th>
+          <th>Extension</th>
+          <th>Type of Assistance</th>
+          <th>Next Claim Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${matches.map((m,i)=>`
+          <tr>
+            <td>${i+1}</td>
+            <td>${m.date}</td>
+            <td>${m.last}</td>
+            <td>${m.first}</td>
+            <td>${m.ext}</td>
+            <td>${m.type}</td>
+            <td>${addThreeMonths(m.date)}</td>
+          </tr>`).join("")}
+      </tbody>
+    </table>
+  `;
+  document.getElementById("results").style.display = "block";
+}
+
+/* ===== FORM RESET ===== */
+function resetForm() {
+  document.getElementById("lastName").value = "";
+  document.getElementById("firstName").value = "";
+  document.getElementById("extName").value = "";
+  document.getElementById("assistanceType").value = "";
+  document.getElementById("message").innerHTML = "";
+  document.getElementById("results").style.display = "none";
+}
+
+/* ===== SHOW MESSAGES ===== */
+function showMessage(type, title, text){
+  const msgEl = document.getElementById("message");
+  const icons = {ok:"🟢", err:"🔴", msg:"ℹ️"};
+  msgEl.innerHTML = `
+    <div class="msg ${type}">
+      <div class="icon">${icons[type]||""}</div>
+      <div>
+        <strong>${title}</strong><br>
+        <div class="small">${text||""}</div>
+      </div>
+    </div>
+  `;
+}
+</script>
+
+</body>
+</html>
