@@ -441,4 +441,81 @@ app.checkDuplicate = async function() {
     app.renderResults(matches);
     
   } catch (err) {
-    app.showMessage("
+    app.showMessage("err", "Data Error", "Unable to load records");
+  }
+};
+
+app.renderResults = function(matches) {
+  let html = `
+    <table>
+      <thead>
+        <tr>
+          <th>Date of Claim</th>
+          <th>Last Name</th>
+          <th>First Name</th>
+          <th>Ext</th>
+          <th>Type</th>
+          <th>Next Eligible</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  matches.forEach(match => {
+    const nextClaim = app.addThreeMonths(match.date);
+    html += `
+      <tr>
+        <td>${match.date}</td>
+        <td><span class="pill">${match.last}</span></td>
+        <td><span class="pill">${match.first}</span></td>
+        <td><span class="pill">${match.ext}</span></td>
+        <td><span class="pill type">${match.type}</span></td>
+        <td><span class="pill">${nextClaim}</span></td>
+      </tr>
+    `;
+  });
+  
+  html += `</tbody></table>`;
+  document.getElementById("resultsTableWrap").innerHTML = html;
+  document.getElementById("results").style.display = "block";
+};
+
+// ========================================
+// UI HELPER METHODS
+// ========================================
+app.showMessage = function(type, title, detail) {
+  const cls = type === "err" ? "msg err" : type === "ok" ? "msg ok" : "msg";
+  document.getElementById("message").innerHTML = `
+    <div class="${cls}">
+      <div class="icon"></div>
+      <div>
+        <strong>${title}</strong>
+        ${detail ? `<div class="small">${detail}</div>` : ""}
+      </div>
+    </div>
+  `;
+};
+
+app.resetForm = function() {
+  document.getElementById("lastName").value = "";
+  document.getElementById("firstName").value = "";
+  document.getElementById("extName").value = "";
+  document.getElementById("assistanceType").value = "";
+  document.getElementById("message").innerHTML = "";
+  document.getElementById("results").style.display = "none";
+  document.getElementById("resultsTableWrap").innerHTML = "";
+  app.cancelQRScanner();
+  app.cachedData = null; // Clear cache on reset
+};
+
+// ========================================
+// GLOBAL FALLBACKS (for onclick handlers)
+// ========================================
+window.startQRScanner = () => app.startQRScanner();
+window.cancelQRScanner = () => app.cancelQRScanner();
+window.checkDuplicate = () => app.checkDuplicate();
+window.resetForm = () => app.resetForm();
+</script>
+
+</body>
+</html>
