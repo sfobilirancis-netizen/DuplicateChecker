@@ -20,12 +20,15 @@
 --muted:#475569;
 --border:#e2e8f0;
 --shadow:0 10px 28px rgba(2,6,23,0.10);
+
 --radius:14px;
 }
 
+*{box-sizing:border-box}
+
 body{
 margin:0;
-font-family:Arial;
+font-family:Arial,Helvetica,sans-serif;
 background:var(--bg);
 color:var(--text);
 }
@@ -48,6 +51,10 @@ padding:12px 0;
 text-align:center;
 }
 
+.titles .rp{font-size:12px}
+.titles .dept{font-size:20px;font-weight:800}
+.titles .unit{font-size:14px}
+
 .ribbon{
 height:6px;
 background:linear-gradient(
@@ -60,10 +67,11 @@ var(--yellow) 66% 100%
 
 .card{
 margin-top:16px;
-background:#fff;
+background:var(--card);
 border:1px solid var(--border);
 border-radius:var(--radius);
 box-shadow:var(--shadow);
+overflow:hidden;
 }
 
 .cardHeader{
@@ -82,35 +90,36 @@ gap:12px;
 
 @media(min-width:720px){
 .grid{grid-template-columns:repeat(2,1fr)}
+.span2{grid-column:span 2}
 }
 
 @media(min-width:1024px){
 .grid{grid-template-columns:repeat(4,1fr)}
 .span2{grid-column:span 2}
+.span4{grid-column:span 4}
 }
 
-label {
-        display: block;
-        font-size: 12px;
-        color: var(--muted);
-        margin-bottom: 6px;
-      }
+label{
+display:block;
+font-size:12px;
+color:var(--muted);
+margin-bottom:6px;
+}
 
-      input, select {
-        width: 100%;
-        padding: 11px 12px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: #fff;
-        outline: none;
-        font-size: 14px;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
-      }
+input,select{
+width:100%;
+padding:11px 12px;
+border-radius:12px;
+border:1px solid var(--border);
+background:#fff;
+font-size:14px;
+outline:none;
+}
 
-      input:focus, select:focus {
-        border-color: rgba(0, 56, 168, 0.55);
-        box-shadow: 0 0 0 4px rgba(0, 56, 168, 0.14);
-      }
+input:focus,select:focus{
+border-color:rgba(0,56,168,0.55);
+box-shadow:0 0 0 4px rgba(0,56,168,0.14);
+}
 
 .actions{
 display:flex;
@@ -118,8 +127,9 @@ gap:10px;
 flex-wrap:wrap;
 }
 
-button{
+button.btn{
 border:1px solid var(--border);
+background:#fff;
 padding:10px 14px;
 border-radius:12px;
 font-weight:700;
@@ -138,7 +148,6 @@ border-radius:12px;
 border:1px solid var(--border);
 display:flex;
 gap:10px;
-align-items:flex-start;
 }
 
 .msg.ok{background:#f0fdf4;border-color:#bbf7d0}
@@ -171,6 +180,7 @@ font-weight:700;
 table{
 width:100%;
 border-collapse:collapse;
+min-width:820px;
 }
 
 thead th{
@@ -187,6 +197,8 @@ border-bottom:1px solid var(--border);
 font-size:13px;
 }
 
+tbody tr:hover td{background:#f8fafc}
+
 #qr-reader{margin-top:15px}
 
 </style>
@@ -197,9 +209,11 @@ font-size:13px;
 <header>
 <div class="headerTop">
 <div class="container">
-<div>Republic of the Philippines</div>
-<div><strong>Department of Social Welfare and Development</strong></div>
-<div>Duplicate Checker</div>
+<div class="titles">
+<div class="rp">Republic of the Philippines</div>
+<div class="dept">Department of Social Welfare and Development</div>
+<div class="unit">Duplicate Checker</div>
+</div>
 </div>
 </div>
 <div class="ribbon"></div>
@@ -219,17 +233,17 @@ font-size:13px;
 
 <div>
 <label>Beneficiary's Last Name</label>
-<input id="lastName" placeholder="Enter beneficiary's last name" autocomplete="off" >
+<input id="lastName" placeholder="Enter beneficiary's last name">
 </div>
 
 <div>
 <label>Beneficiary's First Name</label>
-<input id="firstName" placeholder="Enter beneficiary's first name" autocomplete="off" >
+<input id="firstName" placeholder="Enter beneficiary's first name">
 </div>
 
 <div>
 <label>Beneficiary's Extension (if any)</label>
-<input id="extName" placeholder="e.g. JR / SR / II" autocomplete="off" >
+<input id="extName" placeholder="e.g. JR / SR / II">
 </div>
 
 <div>
@@ -248,15 +262,16 @@ font-size:13px;
 <div class="span2">
 <label>Actions</label>
 <div class="actions">
-<button class="btnPrimary" onclick="startQRScanner()">Scan QR</button>
-<button onclick="checkDuplicate()">Check Duplicate</button>
-<button onclick="resetForm()">Reset</button>
+<button class="btn btnPrimary" onclick="startQRScanner()">Scan QR</button>
+<button class="btn btnPrimary" onclick="checkDuplicate()">Check Duplicate</button>
+<button class="btn" onclick="resetForm()">Reset</button>
 </div>
 </div>
 
 </div>
 
 <div id="qr-reader"></div>
+
 <div id="message"></div>
 
 <div id="results" class="results" style="display:none;">
@@ -309,7 +324,7 @@ showMessage("err","Invalid QR format","Unable to read QR");
 
 }
 
-const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv';
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv";
 
 let cachedData=null;
 
@@ -372,7 +387,6 @@ if(matches.length===0){
 
 showMessage("ok","No duplicate found","Beneficiary may proceed");
 document.getElementById("results").style.display="none";
-
 return;
 
 }
@@ -393,7 +407,6 @@ let html=`<table>
 <tbody>`;
 
 matches.forEach(m=>{
-
 html+=`
 <tr>
 <td>${m.date}</td>
@@ -403,8 +416,7 @@ html+=`
 <td>${m.type}</td>
 <td>${m.row}</td>
 </tr>`;
-
-})
+});
 
 html+=`</tbody></table>`;
 
