@@ -242,7 +242,30 @@ text-align:left;
 tbody td{padding:12px;border-bottom:1px solid var(--border);font-size:13px}
 tbody tr:hover td{background:#f8fafc}
 
-#qr-reader{margin-top:15px}
+/* QR scanner overlay and fixed center */
+#qr-reader {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px;
+  height: 320px;
+  z-index: 9999;
+  background: #000;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  display: none;
+}
+#qr-overlay {
+  position: fixed;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9998;
+  display: none;
+}
 
 </style>
 </head>
@@ -314,6 +337,7 @@ tbody tr:hover td{background:#f8fafc}
 </div>
 
 <div id="qr-reader"></div>
+<div id="qr-overlay" onclick="stopQRScanner()"></div>
 
 <div id="message"></div>
 
@@ -334,10 +358,28 @@ const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4
 let cachedData=null;
 
 async function startQRScanner(){
+  let overlay = document.getElementById("qr-overlay");
+  overlay.style.display = "block";
+
   const qrContainer=document.getElementById("qr-reader");
+  qrContainer.style.display = "block";
   qrContainer.innerHTML="";
   qrScanner=new Html5Qrcode("qr-reader");
-  await qrScanner.start({facingMode:"environment"},{fps:10,qrbox:250},qrSuccess);
+  await qrScanner.start(
+    {facingMode:"environment"},
+    {fps:10,qrbox:250},
+    qrSuccess
+  );
+}
+
+function stopQRScanner(){
+  if(qrScanner){
+    qrScanner.stop();
+    qrScanner.clear();
+  }
+  document.getElementById("qr-reader").style.display = "none";
+  const overlay = document.getElementById("qr-overlay");
+  if(overlay) overlay.style.display = "none";
 }
 
 function qrSuccess(decodedText){
@@ -346,8 +388,7 @@ function qrSuccess(decodedText){
     document.getElementById("lastName").value=data.subject.lName||"";
     document.getElementById("firstName").value=data.subject.fName||"";
     document.getElementById("extName").value=data.subject.Suffix||"";
-    qrScanner.stop();
-    document.getElementById("qr-reader").innerHTML="";
+    stopQRScanner();
   }catch(e){
     showMessage("err","Invalid QR format","Unable to read QR");
   }
@@ -368,7 +409,6 @@ function parseCSV(csv){
   })
 }
 
-// Add 3 months to a date string
 function addThreeMonths(dateStr){
   const date = new Date(dateStr);
   date.setMonth(date.getMonth() + 3);
@@ -438,7 +478,7 @@ function resetForm(){
   document.getElementById("message").innerHTML="";
   document.getElementById("results").style.display="none";
   document.getElementById("resultsTableWrap").innerHTML="";
-  document.getElementById("qr-reader").innerHTML="";
+  stopQRScanner();
 }
 
 </script>
