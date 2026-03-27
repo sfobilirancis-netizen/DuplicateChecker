@@ -127,19 +127,43 @@ gap:10px;
 flex-wrap:wrap;
 }
 
-button.btn{
-border:1px solid var(--border);
-background:#fff;
-padding:10px 14px;
-border-radius:12px;
-font-weight:700;
-cursor:pointer;
+button.btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;       /* ensure text centered */
+  transition: transform 0.08s ease, opacity 0.15s ease;
 }
+button.btn:active { transform: translateY(1px); }
 
-.btnPrimary{
-background:linear-gradient(135deg,var(--blue),var(--blue2));
-color:#fff;
+button.btnPrimary {
+  background: linear-gradient(135deg, var(--blue), var(--blue2));
+  border-color: rgba(0, 56, 168, 0.35);
+  color: #fff !important;       /* force white text */
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  padding: 10px 16px;
+  white-space: nowrap;          /* prevent text from wrapping */
 }
+button.btnPrimary:hover { opacity: 0.95; }
+
+button.btnGhost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 14px;
+  cursor: pointer;
+  text-align: center;
+}
+button.btnGhost:hover { background: #f1f5f9; }
 
 .msg{
 margin-top:14px;
