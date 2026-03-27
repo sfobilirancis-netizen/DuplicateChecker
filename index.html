@@ -368,14 +368,14 @@ function parseCSV(csv){
   })
 }
 
-function getThreeMonthsAgoMs_() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate() + 1);
-  threeMonthsAgo.setHours(0, 0, 0, 0);
-
-  return threeMonthsAgo.getTime();
+// Add 3 months to a date string
+function addThreeMonths(dateStr){
+  const date = new Date(dateStr);
+  date.setMonth(date.getMonth() + 3);
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  return `${mm}/${dd}/${yyyy}`;
 }
 
 async function checkDuplicate(){
@@ -400,23 +400,20 @@ async function checkDuplicate(){
 
   showMessage("err","Duplicate Found",matches.length + " record(s) found");
 
-  const threeMonthsAgoMs = getThreeMonthsAgoMs_();
   let html = `<table>
     <thead><tr>
-      <th>Date of Claim</th><th>Last</th><th>First</th><th>Ext</th><th>Type</th><th>Row # / Next Claim</th>
+      <th>Date of Claim</th><th>Last</th><th>First</th><th>Ext</th><th>Type</th><th>Next Claim</th>
     </tr></thead><tbody>`;
 
   matches.forEach(m => {
-    const claimDateMs = new Date(m.date).getTime();
-    let rowDisplay = claimDateMs >= threeMonthsAgoMs ? "Next claim" : m.row;
-    
+    const nextClaim = addThreeMonths(m.date);
     html += `<tr>
       <td>${m.date}</td>
       <td><span class="pill">${m.last}</span></td>
       <td><span class="pill">${m.first}</span></td>
       <td><span class="pill">${m.ext}</span></td>
       <td><span class="pill type">${m.type}</span></td>
-      <td><span class="pill">${rowDisplay}</span></td>
+      <td><span class="pill">${nextClaim}</span></td>
     </tr>`;
   });
 
