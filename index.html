@@ -12,7 +12,6 @@
   --blue2:#0b4bd6;
   --red:#CE1126;
   --yellow:#FCD116;
-
   --bg:#f4f6fb;
   --card:#ffffff;
   --text:#0b1220;
@@ -85,8 +84,8 @@ tbody tr:hover td{background:#f8fafc}
   margin-bottom: 12px;
 }
 #qr-reader {
-  width: 80vw;
-  max-width: 400px;
+  width: 90vw;
+  max-width: 500px;
   aspect-ratio:1/1;
   border-radius: 12px;
   background:#000;
@@ -104,7 +103,7 @@ tbody tr:hover td{background:#f8fafc}
   position:absolute;
   top:50%; left:50%;
   transform:translate(-50%,-50%);
-  width:80%; height:80%;
+  width:90%; height:90%;
   border: 4px solid #fff;
   border-radius: 8px;
   box-sizing:border-box;
@@ -210,14 +209,25 @@ async function startQRScanner(){
   document.body.appendChild(overlay);
 
   const container=document.getElementById("qr-reader");
-  const boxSize=Math.min(container.clientWidth, container.clientHeight, 250);
+  const boxSize = container.clientWidth;
 
-  qrScanner=new Html5Qrcode("qr-reader");
-  await qrScanner.start(
-    { facingMode:"environment", zoom: 2 },
-    { fps:20, qrbox:boxSize, experimentalFeatures: { useBarCodeDetectorIfSupported: true } },
-    qrSuccess
-  );
+  qrScanner = new Html5Qrcode("qr-reader");
+  const config = {
+    fps: 15,
+    qrbox: { width: boxSize, height: boxSize },
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+  };
+
+  try {
+    await qrScanner.start(
+      { facingMode: "environment", width: 1280, height: 720, focusMode: "continuous" },
+      config,
+      qrSuccess
+    );
+  } catch(err) {
+    showMessage("err","Camera Error", err.message || err);
+  }
 }
 
 function cancelQRScanner(){
