@@ -1,15 +1,14 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
 <base target="_top" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-
 <title>Duplicate Checker</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-
 :root{
 --blue:#0038A8;
 --blue2:#0b4bd6;
@@ -52,18 +51,9 @@ padding:12px 0;
 text-align:center;
 }
 
-.titles .rp{
-font-size:12px;
-}
-
-.titles .dept{
-font-size:20px;
-font-weight:800;
-}
-
-.titles .unit{
-font-size:14px;
-}
+.titles .rp{font-size:12px}
+.titles .dept{font-size:20px;font-weight:800}
+.titles .unit{font-size:14px}
 
 .ribbon{
 height:6px;
@@ -84,9 +74,7 @@ border-bottom:1px solid var(--border);
 background:#fbfdff;
 }
 
-.cardBody{
-padding:16px;
-}
+.cardBody{padding:16px}
 
 .grid{
 display:grid;
@@ -144,15 +132,24 @@ border-radius:12px;
 border:1px solid var(--border);
 display:flex;
 gap:10px;
+align-items:flex-start;
 }
 
 .msg.ok{background:#f0fdf4;border-color:#bbf7d0}
 .msg.err{background:#fef2f2;border-color:#fecaca}
 
-#qr-reader{
-margin-top:15px;
+.msg .icon{
+width:10px;
+height:10px;
+border-radius:50%;
+margin-top:4px;
+background:#94a3b8;
 }
 
+.msg.ok .icon{background:#22c55e}
+.msg.err .icon{background:#ef4444}
+
+#qr-reader{margin-top:15px}
 </style>
 </head>
 
@@ -216,9 +213,7 @@ margin-top:15px;
 <div class="actions">
 
 <button class="btnPrimary" onclick="startQRScanner()">Scan QR</button>
-
 <button onclick="checkDuplicate()">Check Duplicate</button>
-
 <button onclick="resetForm()">Reset</button>
 
 </div>
@@ -227,11 +222,11 @@ margin-top:15px;
 </div>
 
 <div id="qr-reader"></div>
-
 <div id="message"></div>
 
 </div>
 </div>
+
 </main>
 
 <script>
@@ -242,7 +237,7 @@ async function startQRScanner(){
 
 const qrContainer=document.getElementById("qr-reader");
 qrContainer.innerHTML="";
-showMessage("","");
+showMessage("","","");
 
 try{
 
@@ -257,13 +252,13 @@ qrSuccess
 }catch(error){
 
 if(error.message.includes("Permission")){
-showMessage("err","Camera permission denied. Please allow camera access.");
+showMessage("err","Camera permission denied","Please allow camera access.");
 }
 else if(error.message.includes("NotFound")){
-showMessage("err","No camera found on this device.");
+showMessage("err","No camera found","This device has no camera.");
 }
 else{
-showMessage("err","Scanner failed to start. Use HTTPS and allow camera.");
+showMessage("err","Scanner failed","Use HTTPS and allow camera.");
 }
 
 }
@@ -289,7 +284,7 @@ document.getElementById("qr-reader").innerHTML="";
 
 }catch(e){
 
-showMessage("err","Invalid QR format");
+showMessage("err","Invalid QR format","Unable to read QR.");
 
 }
 
@@ -336,9 +331,11 @@ const first=document.getElementById("firstName").value.trim().toLowerCase();
 const type=document.getElementById("assistanceType").value.trim().toLowerCase();
 
 if(!last||!first||!type){
-showMessage("err","Please fill required fields");
+showMessage("err","Missing Information","Fill Last Name, First Name and Assistance Type.");
 return;
 }
+
+showMessage("msg","Searching","Checking records...");
 
 const data=await fetchData();
 
@@ -349,24 +346,30 @@ r.assistanceType.toLowerCase()==type
 );
 
 if(match){
-showMessage("err","Duplicate Found");
+showMessage("err","Duplicate Found","This beneficiary already received this assistance.");
 }else{
-showMessage("ok","No Duplicate Found");
+showMessage("ok","No Duplicate Found","Beneficiary may proceed for assistance.");
 }
 
 }
 
-function showMessage(type,msg){
+function showMessage(type,title,detail){
 
-if(!msg){
+if(!title){
 document.getElementById("message").innerHTML="";
 return;
 }
 
-const cls=type==="err"?"msg err":"msg ok";
+const cls=type==="err"?"msg err":type==="ok"?"msg ok":"msg";
 
 document.getElementById("message").innerHTML=
-`<div class="${cls}">${msg}</div>`;
+`<div class="${cls}">
+<div class="icon"></div>
+<div>
+<strong>${title}</strong>
+${detail?`<div style="font-size:12px;color:#475569">${detail}</div>`:""}
+</div>
+</div>`;
 
 }
 
@@ -376,7 +379,8 @@ document.getElementById("lastName").value="";
 document.getElementById("firstName").value="";
 document.getElementById("extName").value="";
 document.getElementById("assistanceType").value="";
-showMessage("","");
+document.getElementById("qr-reader").innerHTML="";
+showMessage("","","");
 
 }
 
@@ -384,3 +388,4 @@ showMessage("","");
 
 </body>
 </html>
+```
