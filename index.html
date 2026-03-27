@@ -1,310 +1,410 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Duplicate Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Duplicate Checker</title>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
 
-<style>
-:root {
-  --blue:#0038A8;
-  --blue2:#0b4bd6;
-  --red:#CE1126;
-  --yellow:#FCD116;
+  <style>
+    /* === Colors & Theme === */
+    :root {
+      --blue: #0038A8;
+      --blue2: #0b4bd6;
+      --red: #CE1126;
+      --yellow: #FCD116;
 
-  --bg:#f4f6fb;
-  --card:#ffffff;
-  --text:#0b1220;
-  --muted:#475569;
-  --border:#e2e8f0;
-  --shadow:0 10px 28px rgba(2,6,23,0.10);
-  --radius:14px;
-}
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #0b1220;
+      --muted: #475569;
+      --border: #e2e8f0;
+      --shadow: 0 10px 28px rgba(2,6,23,0.10);
+      --radius: 14px;
+    }
 
-/* Global Styles */
-* { box-sizing: border-box; }
-body { margin:0; font-family: Arial, Helvetica, sans-serif; background: var(--bg); color: var(--text); }
-.container { max-width:1120px; margin:auto; padding:16px; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
 
-/* Header */
-header { background:#fff; border-bottom:4px solid var(--blue); }
-.headerTop { background: linear-gradient(90deg,var(--blue),var(--blue2)); color:#fff; padding:12px 0; text-align:center; }
-.titles .rp { font-size:12px; }
-.titles .dept { font-size:20px; font-weight:800; }
-.titles .unit { font-size:14px; }
-.ribbon { height:6px; background: linear-gradient(90deg,var(--blue) 0 33%,var(--red) 33% 66%,var(--yellow) 66% 100%); }
+    .container { max-width: 1120px; margin: auto; padding: 16px; }
 
-/* Card */
-.card { margin-top:16px; background: var(--card); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow:hidden; }
-.cardHeader { padding:14px 16px; border-bottom:1px solid var(--border); background:#fbfdff; }
-.cardBody { padding:16px; }
+    /* === Header === */
+    header { background: #fff; border-bottom: 4px solid var(--blue); }
+    .headerTop {
+      background: linear-gradient(90deg,var(--blue),var(--blue2));
+      color: #fff;
+      padding: 12px 0;
+      text-align: center;
+    }
+    .titles .rp { font-size: 12px; }
+    .titles .dept { font-size: 20px; font-weight: 800; }
+    .titles .unit { font-size: 14px; }
+    .ribbon { height: 6px; background: linear-gradient(90deg,var(--blue) 0 33%,var(--red) 33% 66%,var(--yellow) 66% 100%); }
 
-/* Grid */
-.grid { display:grid; grid-template-columns:1fr; gap:12px; }
-@media(min-width:720px){ .grid{grid-template-columns:repeat(2,1fr);} .span2{grid-column:span 2;} }
-@media(min-width:1024px){ .grid{grid-template-columns:repeat(4,1fr);} .span2{grid-column:span 2;} .span4{grid-column:span 4;} }
+    /* === Cards & Grid === */
+    .card { 
+      margin-top: 16px; 
+      background: var(--card); 
+      border: 1px solid var(--border); 
+      border-radius: var(--radius); 
+      box-shadow: var(--shadow); 
+      overflow: hidden; 
+    }
+    .cardHeader { padding: 14px 16px; border-bottom: 1px solid var(--border); background: #fbfdff; }
+    .cardBody { padding: 16px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media(min-width:720px){ .grid{ grid-template-columns: repeat(2,1fr); } .span2{ grid-column: span 2; } }
+    @media(min-width:1024px){ .grid{ grid-template-columns: repeat(4,1fr); } .span2{ grid-column: span 2; } .span4{ grid-column: span 4; } }
 
-/* Form Inputs */
-label { display:block; font-size:12px; color: var(--muted); margin-bottom:6px; }
-input, select { width:100%; padding:11px 12px; border-radius:12px; border:1px solid var(--border); background:#fff; font-size:14px; outline:none; }
-input:focus, select:focus { border-color: rgba(0,56,168,0.55); box-shadow:0 0 0 4px rgba(0,56,168,0.14); }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    input, select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: rgba(0,56,168,0.55);
+      box-shadow: 0 0 0 4px rgba(0,56,168,0.14);
+    }
 
-/* Buttons */
-.actions { display:flex; gap:10px; flex-wrap:wrap; }
-button.btn { border:1px solid var(--border); background:#fff; color: var(--text); padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700; font-size:13px; text-align:center; transition: transform 0.08s ease, opacity 0.15s ease; }
-button.btn:active { transform: translateY(1px); }
-button.btnPrimary { background: linear-gradient(135deg, var(--blue), var(--blue2)); border-color: rgba(0,56,168,0.35); color:#fff !important; font-weight:700; font-size:14px; text-align:center; padding:10px 16px; white-space:nowrap; }
-button.btnPrimary:hover { opacity:0.95; }
-button.btnGhost { background:transparent; color: var(--text); border:1px solid var(--border); font-weight:700; font-size:13px; padding:10px 14px; cursor:pointer; text-align:center; }
-button.btnGhost:hover { background:#f1f5f9; }
+    /* === Buttons === */
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    button.btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      text-align: center;
+      transition: transform 0.08s ease, opacity 0.15s ease;
+    }
+    button.btn:active { transform: translateY(1px); }
 
-/* Messages */
-.msg { margin-top:14px; padding:12px 14px; border-radius:12px; border:1px solid var(--border); display:flex; gap:10px; align-items:flex-start; }
-.msg.ok { background:#f0fdf4; border-color:#bbf7d0; }
-.msg.err { background:#fef2f2; border-color:#fecaca; }
-.msg .icon { width:10px; height:10px; border-radius:50%; margin-top:4px; }
-.msg.ok .icon { background:#22c55e; }
-.msg.err .icon { background:#ef4444; }
-.msg strong { font-size:13px; }
-.msg .small { font-size:12px; color:var(--muted); margin-top:2px; }
+    button.btnPrimary {
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      border-color: rgba(0,56,168,0.35);
+      color: #fff !important;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 10px 16px;
+      white-space: nowrap;
+    }
+    button.btnPrimary:hover { opacity: 0.95; }
 
-/* Results Table */
-.results { margin-top:14px; border:1px solid var(--border); border-radius: var(--radius); overflow:hidden; background:#fff; }
-.resultsHeader { padding:12px 14px; border-bottom:1px solid var(--border); background: linear-gradient(90deg,rgba(0,56,168,0.06),rgba(206,17,38,0.06)); display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:700; }
-.pill { display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:#f8fafc; font-size:12px; font-weight:700; color:#0f172a; white-space:nowrap; }
-.pill.type { border-color: rgba(206,17,38,0.25); background: rgba(206,17,38,0.08); color:#7f1d1d; }
-.tableWrap { overflow:auto; }
-table { width:100%; border-collapse:collapse; min-width:820px; }
-thead th { position:sticky; top:0; background:var(--blue); color:#fff; padding:12px; font-size:12px; text-align:left; }
-tbody td { padding:12px; border-bottom:1px solid var(--border); font-size:13px; }
-tbody tr:hover td { background:#f8fafc; }
+    button.btnGhost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 13px;
+      padding: 10px 14px;
+    }
+    button.btnGhost:hover { background: #f1f5f9; }
 
-/* QR Scanner Overlay */
-#qr-overlay {
-  position: fixed; top:0; left:0;
-  width:100vw; height:100vh;
-  background: rgba(0,0,0,0.6);
-  display:flex; flex-direction:column; justify-content:center; align-items:center;
-  z-index:9999;
-}
-#qr-overlay label {
-  color:#fff; font-weight:700; font-size:18px; margin-bottom:12px;
-}
-#qr-reader {
-  width:80vw;
-  max-width:400px;
-  aspect-ratio:1/1;
-  border-radius:12px;
-  background:#000;
-  overflow:hidden;
-  position: relative;
-}
-/* Force camera video to fill square container */
-#qr-reader video {
-  object-fit: cover !important;
-  width:100% !important;
-  height:100% !important;
-}
+    /* === Messages === */
+    .msg {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .msg.ok { background: #f0fdf4; border-color: #bbf7d0; }
+    .msg.err { background: #fef2f2; border-color: #fecaca; }
+    .msg .icon { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; }
+    .msg.ok .icon { background: #22c55e; }
+    .msg.err .icon { background: #ef4444; }
+    .msg strong { font-size: 13px; }
+    .msg .small { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-/* QR scanning corners */
-#qr-reader::before {
-  content:"";
-  position:absolute;
-  top:0; left:0; width:100%; height:100%;
-  pointer-events:none;
-  box-sizing:border-box;
-  background: 
-    linear-gradient(to right, #fff 2px, transparent 2px) 0 0 / 20% 20% repeat-x repeat-y,
-    linear-gradient(to bottom, #fff 2px, transparent 2px) 0 0 / 20% 20% repeat-x repeat-y;
-  border:none;
-}
-</style>
+    /* === Results Table === */
+    .results { margin-top: 14px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: #fff; }
+    .resultsHeader {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, rgba(0,56,168,0.06), rgba(206,17,38,0.06));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 700;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+    .pill.type { border-color: rgba(206,17,38,0.25); background: rgba(206,17,38,0.08); color: #7f1d1d; }
+    .tableWrap { overflow: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    thead th { position: sticky; top: 0; background: var(--blue); color: #fff; padding: 12px; font-size: 12px; text-align: left; }
+    tbody td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    tbody tr:hover td { background: #f8fafc; }
+
+    /* === QR Scanner Overlay === */
+    #qr-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.6);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 9999;
+      flex-direction: column;
+    }
+    #qr-overlay label {
+      color: #fff; font-weight: 700; font-size: 18px; margin-bottom: 12px;
+    }
+    #qr-reader {
+      width: 80vw; max-width: 400px;
+      aspect-ratio: 1/1;
+      border-radius: 12px;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+    }
+    #qr-reader video {
+      object-fit: cover !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* === Scanning Frame - Corners Only === */
+    #qr-reader::before {
+      content: "";
+      position: absolute;
+      width: 80%; height: 80%;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      border: none;
+    }
+    #qr-reader::after {
+      content: "";
+      position: absolute;
+      width: 80%; height: 80%;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      border: 4px solid transparent;
+      border-top-color: #fff;
+      border-left-color: #fff;
+      border-bottom-color: #fff;
+      border-right-color: #fff;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+    #qr-reader .corner {
+      position: absolute;
+      width: 20px; height: 20px;
+      border: 4px solid #fff;
+    }
+    /* Top-left */
+    #qr-reader .corner.tl { top:0; left:0; border-right:0; border-bottom:0; }
+    /* Top-right */
+    #qr-reader .corner.tr { top:0; right:0; border-left:0; border-bottom:0; }
+    /* Bottom-left */
+    #qr-reader .corner.bl { bottom:0; left:0; border-right:0; border-top:0; }
+    /* Bottom-right */
+    #qr-reader .corner.br { bottom:0; right:0; border-left:0; border-top:0; }
+  </style>
 </head>
 
 <body>
-<header>
-  <div class="headerTop">
-    <div class="container">
-      <div class="titles">
-        <div class="rp">Republic of the Philippines</div>
-        <div class="dept">Department of Social Welfare and Development</div>
-        <div class="unit">Duplicate Checker</div>
+  <header>
+    <div class="headerTop">
+      <div class="container">
+        <div class="titles">
+          <div class="rp">Republic of the Philippines</div>
+          <div class="dept">Department of Social Welfare and Development</div>
+          <div class="unit">Duplicate Checker</div>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="ribbon"></div>
-</header>
+    <div class="ribbon"></div>
+  </header>
 
-<main class="container">
-  <div class="card">
-    <div class="cardHeader"><strong>Beneficiary Duplicate Validation</strong></div>
-    <div class="cardBody">
-      <div class="grid">
-        <div>
-          <label>Beneficiary's Last Name</label>
-          <input id="lastName" placeholder="Enter beneficiary's last name">
-        </div>
-        <div>
-          <label>Beneficiary's First Name</label>
-          <input id="firstName" placeholder="Enter beneficiary's first name">
-        </div>
-        <div>
-          <label>Beneficiary's Extension (if any)</label>
-          <input id="extName" placeholder="e.g. JR / SR / II">
-        </div>
-        <div>
-          <label>Type of Assistance</label>
-          <select id="assistanceType">
-            <option value="">Select type</option>
-            <option>Cash Relief Assistance</option>
-            <option>Medical Assistance</option>
-            <option>Food Assistance</option>
-            <option>Funeral Assistance</option>
-            <option>Transportation Assistance</option>
-            <option>Educational Assistance</option>
-          </select>
-        </div>
-        <div class="span2">
-          <label>Actions</label>
-          <div class="actions">
-            <button class="btn btnPrimary" onclick="startQRScanner()">Scan QR</button>
-            <button class="btn btnPrimary" onclick="checkDuplicate()">Check Duplicate</button>
-            <button class="btn" onclick="resetForm()">Reset</button>
+  <main class="container">
+    <div class="card">
+      <div class="cardHeader"><strong>Beneficiary Duplicate Validation</strong></div>
+      <div class="cardBody">
+        <div class="grid">
+          <div>
+            <label>Beneficiary's Last Name</label>
+            <input id="lastName" placeholder="Enter beneficiary's last name">
+          </div>
+          <div>
+            <label>Beneficiary's First Name</label>
+            <input id="firstName" placeholder="Enter beneficiary's first name">
+          </div>
+          <div>
+            <label>Beneficiary's Extension (if any)</label>
+            <input id="extName" placeholder="e.g. JR / SR / II">
+          </div>
+          <div>
+            <label>Type of Assistance</label>
+            <select id="assistanceType">
+              <option value="">Select type</option>
+              <option>Cash Relief Assistance</option>
+              <option>Medical Assistance</option>
+              <option>Food Assistance</option>
+              <option>Funeral Assistance</option>
+              <option>Transportation Assistance</option>
+              <option>Educational Assistance</option>
+            </select>
+          </div>
+          <div class="span2">
+            <label>Actions</label>
+            <div class="actions">
+              <button class="btn btnPrimary" onclick="startQRScanner()">Scan QR</button>
+              <button class="btn btnPrimary" onclick="checkDuplicate()">Check Duplicate</button>
+              <button class="btn" onclick="resetForm()">Reset</button>
+            </div>
           </div>
         </div>
-      </div>
-      <div id="message"></div>
-      <div id="results" class="results" style="display:none;">
-        <div class="resultsHeader">Match Results</div>
-        <div class="tableWrap" id="resultsTableWrap"></div>
+
+        <div id="message"></div>
+        <div id="results" class="results" style="display:none;">
+          <div class="resultsHeader">Match Results</div>
+          <div class="tableWrap" id="resultsTableWrap"></div>
+        </div>
       </div>
     </div>
-  </div>
-</main>
+  </main>
 
-<script>
-let qrScanner;
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv";
-let cachedData = null;
+  <script>
+    let qrScanner;
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv";
+    let cachedData = null;
 
-async function startQRScanner() {
-  const overlay = document.createElement("div");
-  overlay.id = "qr-overlay";
-  overlay.innerHTML = `<label>Scan QR Code</label><div id="qr-reader"></div>`;
-  document.body.appendChild(overlay);
+    async function startQRScanner() {
+      let overlay = document.createElement("div");
+      overlay.id = "qr-overlay";
+      overlay.innerHTML = `<label>Scan QR Code</label><div id="qr-reader"></div>`;
+      document.body.appendChild(overlay);
 
-  const container = document.getElementById("qr-reader");
-  const boxSize = Math.min(container.clientWidth, container.clientHeight);
+      const container = document.getElementById("qr-reader");
+      const boxSize = Math.min(container.clientWidth, container.clientHeight);
 
-  qrScanner = new Html5Qrcode("qr-reader");
-  await qrScanner.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: boxSize },
-    qrSuccess
-  );
-}
+      qrScanner = new Html5Qrcode("qr-reader");
+      await qrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: boxSize },
+        qrSuccess
+      );
+    }
 
-function qrSuccess(decodedText) {
-  try {
-    const data = JSON.parse(decodedText);
-    document.getElementById("lastName").value = data.subject.lName || "";
-    document.getElementById("firstName").value = data.subject.fName || "";
-    document.getElementById("extName").value = data.subject.Suffix || "";
-    qrScanner.stop();
-    const overlay = document.getElementById("qr-overlay");
-    if(overlay) overlay.remove();
-  } catch(e) {
-    showMessage("err", "Invalid QR format", "Unable to read QR");
-  }
-}
+    function qrSuccess(decodedText) {
+      try {
+        const data = JSON.parse(decodedText);
+        document.getElementById("lastName").value = data.subject.lName || "";
+        document.getElementById("firstName").value = data.subject.fName || "";
+        document.getElementById("extName").value = data.subject.Suffix || "";
+        qrScanner.stop();
+        const overlay = document.getElementById("qr-overlay");
+        if (overlay) overlay.remove();
+      } catch(e) {
+        showMessage("err","Invalid QR format","Unable to read QR");
+      }
+    }
 
-async function fetchData() {
-  if(cachedData) return cachedData;
-  const response = await fetch(CSV_URL);
-  const csvText = await response.text();
-  cachedData = parseCSV(csvText);
-  return cachedData;
-}
+    async function fetchData() {
+      if (cachedData) return cachedData;
+      const response = await fetch(CSV_URL);
+      const csvText = await response.text();
+      cachedData = parseCSV(csvText);
+      return cachedData;
+    }
 
-function parseCSV(csv) {
-  return csv.trim().split("\n").slice(1).map((r,i) => {
-    const c = r.split(",");
-    return { date: c[0], last: c[1], first: c[2], ext: c[3], type: c[4], row:i+2 };
-  });
-}
+    function parseCSV(csv) {
+      return csv.trim().split("\n").slice(1).map((r,i) => {
+        const c = r.split(",");
+        return { date: c[0], last: c[1], first: c[2], ext: c[3], type: c[4], row: i+2 };
+      });
+    }
 
-function addThreeMonths(dateStr) {
-  const date = new Date(dateStr);
-  date.setMonth(date.getMonth() + 3);
-  const mm = String(date.getMonth() + 1).padStart(2,"0");
-  const dd = String(date.getDate()).padStart(2,"0");
-  const yyyy = date.getFullYear();
-  return `${mm}/${dd}/${yyyy}`;
-}
+    function addThreeMonths(dateStr) {
+      const date = new Date(dateStr);
+      date.setMonth(date.getMonth() + 3);
+      const mm = String(date.getMonth()+1).padStart(2,"0");
+      const dd = String(date.getDate()).padStart(2,"0");
+      const yyyy = date.getFullYear();
+      return `${mm}/${dd}/${yyyy}`;
+    }
 
-async function checkDuplicate() {
-  const last = document.getElementById("lastName").value.trim().toLowerCase();
-  const first = document.getElementById("firstName").value.trim().toLowerCase();
-  const type = document.getElementById("assistanceType").value.trim().toLowerCase();
+    async function checkDuplicate() {
+      const last = document.getElementById("lastName").value.trim().toLowerCase();
+      const first = document.getElementById("firstName").value.trim().toLowerCase();
+      const type = document.getElementById("assistanceType").value.trim().toLowerCase();
+      if (!last || !first || !type) { 
+        showMessage("err","Missing Information","Fill required fields"); 
+        return; 
+      }
 
-  if(!last || !first || !type) { showMessage("err","Missing Information","Fill required fields"); return; }
+      showMessage("msg","Searching","Checking records...");
+      const data = await fetchData();
+      const matches = data.filter(r => r.last.toLowerCase() === last && r.first.toLowerCase() === first && r.type.toLowerCase() === type);
+      if(matches.length === 0) { 
+        showMessage("ok","No duplicate found","Beneficiary may proceed"); 
+        document.getElementById("results").style.display = "none"; 
+        return; 
+      }
 
-  showMessage("msg","Searching","Checking records...");
-  const data = await fetchData();
-  const matches = data.filter(r => r.last.toLowerCase() === last && r.first.toLowerCase() === first && r.type.toLowerCase() === type);
+      showMessage("err","Duplicate Found",matches.length + " record(s) found");
+      let html = `<table><thead><tr><th>Date of Claim</th><th>Last</th><th>First</th><th>Ext</th><th>Type</th><th>Next Claim</th></tr></thead><tbody>`;
+      matches.forEach(m => {
+        const nextClaim = addThreeMonths(m.date);
+        html += `<tr>
+          <td>${m.date}</td>
+          <td><span class="pill">${m.last}</span></td>
+          <td><span class="pill">${m.first}</span></td>
+          <td><span class="pill">${m.ext}</span></td>
+          <td><span class="pill type">${m.type}</span></td>
+          <td><span class="pill">${nextClaim}</span></td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById("resultsTableWrap").innerHTML = html;
+      document.getElementById("results").style.display = "block";
+    }
 
-  if(matches.length === 0) {
-    showMessage("ok","No duplicate found","Beneficiary may proceed");
-    document.getElementById("results").style.display = "none";
-    return;
-  }
+    function showMessage(type,title,detail) {
+      const cls = type==="err"?"msg err":type==="ok"?"msg ok":"msg";
+      document.getElementById("message").innerHTML = 
+        `<div class="${cls}"><div class="icon"></div><div><strong>${title}</strong>${detail?`<div class="small">${detail}</div>`:""}</div></div>`;
+    }
 
-  showMessage("err","Duplicate Found",matches.length + " record(s) found");
-
-  let html = `<table>
-    <thead><tr><th>Date of Claim</th><th>Last</th><th>First</th><th>Ext</th><th>Type</th><th>Next Claim</th></tr></thead>
-    <tbody>`;
-  matches.forEach(m => {
-    html += `<tr>
-      <td>${m.date}</td>
-      <td><span class="pill">${m.last}</span></td>
-      <td><span class="pill">${m.first}</span></td>
-      <td><span class="pill">${m.ext}</span></td>
-      <td><span class="pill type">${m.type}</span></td>
-      <td><span class="pill">${addThreeMonths(m.date)}</span></td>
-    </tr>`;
-  });
-  html += `</tbody></table>`;
-
-  document.getElementById("resultsTableWrap").innerHTML = html;
-  document.getElementById("results").style.display = "block";
-}
-
-function showMessage(type,title,detail){
-  const cls = type==="err" ? "msg err" : type==="ok" ? "msg ok" : "msg";
-  document.getElementById("message").innerHTML = `
-    <div class="${cls}">
-      <div class="icon"></div>
-      <div>
-        <strong>${title}</strong>
-        ${detail ? `<div class="small">${detail}</div>` : ""}
-      </div>
-    </div>`;
-}
-
-function resetForm() {
-  document.getElementById("lastName").value = "";
-  document.getElementById("firstName").value = "";
-  document.getElementById("extName").value = "";
-  document.getElementById("assistanceType").value = "";
-  document.getElementById("message").innerHTML = "";
-  document.getElementById("results").style.display = "none";
-  document.getElementById("resultsTableWrap").innerHTML = "";
-  const overlay = document.getElementById("qr-overlay");
-  if(overlay) overlay.remove();
-}
-</script>
-
+    function resetForm() {
+      document.getElementById("lastName").value = "";
+      document.getElementById("firstName").value = "";
+      document.getElementById("extName").value = "";
+      document.getElementById("assistanceType").value = "";
+      document.getElementById("message").innerHTML = "";
+      document.getElementById("results").style.display = "none";
+      document.getElementById("resultsTableWrap").innerHTML = "";
+      const overlay = document.getElementById("qr-overlay");
+      if (overlay) overlay.remove();
+    }
+  </script>
 </body>
 </html>
