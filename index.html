@@ -1,6 +1,3 @@
-Here's the modified code with improved QR scanning for close-range scanning. The key changes are in the QR scanner configuration and camera settings:
-
-```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -90,11 +87,11 @@ tbody tr:hover td { background:#f8fafc; }
 #qr-overlay label { color:#fff; font-weight:700; font-size:20px; margin-bottom:16px; text-align:center; text-shadow:0 2px 4px rgba(0,0,0,0.5); }
 #qr-instructions { color:#fff; font-size:14px; margin-bottom:12px; text-align:center; background: rgba(255,255,255,0.1); padding:12px 20px; border-radius:12px; backdrop-filter:blur(10px); }
 #qr-reader { width:90vw; max-width:500px; max-height:70vh; aspect-ratio:1/1; border-radius:16px; background:#000; overflow:hidden; position:relative; box-shadow:0 20px 40px rgba(0,0,0,0.5); }
-#qr-reader video { object-fit: cover !important; width:100% !important; height:100% !important; }
+#qr-reader video { object-fit: contain !important; width:100% !important; height:100% !important; }
 #qr-reader::before {
   content:"";
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  width:65%; height:65%; border:3px solid #00ff88; border-top-color:transparent; border-left-color:transparent; border-radius:12px; box-sizing:border-box;
+  width:85%; height:85%; border:3px solid #00ff88; border-top-color:transparent; border-left-color:transparent; border-radius:12px; box-sizing:border-box;
   pointer-events:none;
   box-shadow:0 0 0 3px rgba(0,255,136,0.5);
   animation: scanGlow 2s infinite;
@@ -108,15 +105,11 @@ tbody tr:hover td { background:#f8fafc; }
 #qr-overlay button.cancel-btn:hover { opacity:0.9; transform:translateY(-1px); }
 #qr-overlay button.cancel-btn:active { transform:translateY(0); }
 #qr-overlay .btnPrimary { margin:0; }
-
-/* ===== SMALL BUTTONS ROW ===== */
 #qr-overlay .camera-buttons { display:flex; gap:10px; justify-content:center; margin-top:12px; }
-
 </style>
 </head>
 
 <body>
-
 <header>
   <div class="headerTop">
     <div class="container">
@@ -179,20 +172,17 @@ tbody tr:hover td { background:#f8fafc; }
 </main>
 
 <script>
-/* ===== GLOBAL VARIABLES ===== */
 let qrScanner;
 let camerasList = [];
 let currentCameraIndex = 0;
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv";
 let cachedData = null;
 
-/* ===== QR SCANNER - OPTIMIZED FOR CLOSE RANGE ===== */
 async function startQRScanner() {
   try {
     camerasList = await Html5Qrcode.getCameras();
     if (!camerasList || camerasList.length === 0) throw "No cameras found";
 
-    // Prioritize front camera (selfie camera) for close-range scanning
     const frontCamera = camerasList.find(c => c.facingMode === "user") || camerasList[0];
     currentCameraIndex = camerasList.indexOf(frontCamera);
 
@@ -208,41 +198,18 @@ async function startScannerWithCamera(cameraId) {
   const statusEl = document.getElementById("qr-status");
   qrScanner = new Html5Qrcode("qr-reader", {
     formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-    // Enhanced configuration for close-range scanning
-    experimentalFeatures: {
-      useBarCodeDetectorIfSupported: true,
-      // Enable legacy canvas size mode for better close-range detection
-      legacyCanvasSizeMode: true
-    }
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
   });
 
-  // Optimized config for close-range QR scanning
-  const config = { 
-    fps: 15,  // Reduced FPS for better processing
-    qrbox: {width: 280, height: 280},  // Smaller scan area for close QR codes
-    aspectRatio: 1.0,
-    disableFlip: false,
-    // Critical settings for close-range scanning
-    videoConstraints: {
-      width: { ideal: 1280, max: 1920 },
-      height: { ideal: 720, max: 1080 },
-      facingMode: "user",  // Force front camera
-      focusMode: "continuous",  // Continuous autofocus
-      torch: false
-    },
-    // Increase scan region and reduce margins
-    scanRegion: {
-      topPadding: 0.1,
-      rightPadding: 0.1,
-      bottomPadding: 0.1,
-      leftPadding: 0.1
-    }
-  };
+  const config = { fps: 30, qrbox: { width: 500, height: 500 }, aspectRatio: 1.0, disableFlip: false };
 
   try {
     statusEl.textContent = "📷 Starting camera...";
     await qrScanner.start(cameraId, config, qrSuccess, qrErrorCallback, qrStatusCallback);
-    statusEl.textContent = "✅ Ready! Hold QR 4-12 inches from camera";
+
+    const video = document.querySelector("#qr-reader video");
+    if(video) video.style.objectFit = "contain"; 
+    statusEl.textContent = "✅ Ready! Point QR code at scanner";
   } catch(err) {
     console.error(err);
     statusEl.textContent = "❌ Camera failed to start";
@@ -272,7 +239,7 @@ function showQROverlay() {
     overlay.id = "qr-overlay";
     overlay.innerHTML = `
       <label>📱 Scan Beneficiary QR Code</label>
-      <div id="qr-instructions">Hold QR 4-12 inches from camera • Keep steady • Good lighting</div>
+      <div id="qr-instructions">Hold steady • Keep QR in frame • Good lighting helps</div>
       <div id="qr-reader"></div>
       <div id="qr-status">🔍 Initializing camera...</div>
       <div class="camera-buttons">
@@ -301,7 +268,6 @@ function qrSuccess(decodedText) {
 function qrErrorCallback(err) { if(err) console.warn("QR Error:", err); }
 function qrStatusCallback() { document.getElementById("qr-status").textContent = "🎯 Processing..."; }
 
-/* ===== CSV DATA & DUPLICATE CHECK ===== */
 async function fetchData() {
   if (cachedData) return cachedData;
   const response = await fetch(CSV_URL);
@@ -327,7 +293,7 @@ function addThreeMonths(dateStr){
 }
 
 async function checkDuplicate() {
-    const last = document.getElementById("lastName").value.trim().toLowerCase();
+  const last = document.getElementById("lastName").value.trim().toLowerCase();
   const first = document.getElementById("firstName").value.trim().toLowerCase();
   const type = document.getElementById("assistanceType").value.trim().toLowerCase();
   if (!last || !first || !type) { showMessage("err","Missing Information","Fill required fields"); return; }
@@ -336,69 +302,32 @@ async function checkDuplicate() {
   const data = await fetchData();
   const matches = data.filter(r => r.last.toLowerCase()===last && r.first.toLowerCase()===first && r.type.toLowerCase()===type);
   if(matches.length === 0){ 
-    showMessage("ok","No duplicate found","Beneficiary may proceed"); 
-    document.getElementById("results").style.display = "none";
-    return; 
+    showMessage("ok","No duplicate found","Beneficiary may proceed");
+    document.getElementById("results").style.display="none";
+    return;
   }
 
-  // Display matches
-  showMessage("err", "Duplicate Found", `${matches.length} record(s) found`);
-  const tableWrap = document.getElementById("resultsTableWrap");
-  tableWrap.innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Date of Claim</th>
-          <th>Last Name</th>
-          <th>First Name</th>
-          <th>Extension</th>
-          <th>Type of Assistance</th>
-          <th>Next Claim Date</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${matches.map((m,i)=>`
-          <tr>
-            <td>${i+1}</td>
-            <td>${m.date}</td>
-            <td>${m.last}</td>
-            <td>${m.first}</td>
-            <td>${m.ext}</td>
-            <td>${m.type}</td>
-            <td>${addThreeMonths(m.date)}</td>
-          </tr>`).join("")}
-      </tbody>
-    </table>
-  `;
-  document.getElementById("results").style.display = "block";
+  let html = `<table><thead><tr><th>Date</th><th>Last Name</th><th>First Name</th><th>Extension</th><th>Type</th><th>Expiry</th></tr></thead><tbody>`;
+  matches.forEach(m=>html+=`<tr><td>${m.date}</td><td>${m.last}</td><td>${m.first}</td><td>${m.ext}</td><td>${m.type}</td><td>${addThreeMonths(m.date)}</td></tr>`);
+  html += "</tbody></table>";
+  document.getElementById("resultsTableWrap").innerHTML = html;
+  document.getElementById("results").style.display="block";
+  showMessage("err","Duplicate Found",`There are ${matches.length} record(s)`);
 }
 
-/* ===== FORM RESET ===== */
+function showMessage(type, title, text="") {
+  const container = document.getElementById("message");
+  container.innerHTML = `<div class="msg ${type}"><div class="icon"></div><div><strong>${title}</strong>${text ? `<div class="small">${text}</div>` : ""}</div></div>`;
+}
+
 function resetForm() {
-  document.getElementById("lastName").value = "";
-  document.getElementById("firstName").value = "";
-  document.getElementById("extName").value = "";
-  document.getElementById("assistanceType").value = "";
-  document.getElementById("message").innerHTML = "";
-  document.getElementById("results").style.display = "none";
-}
-
-/* ===== SHOW MESSAGES ===== */
-function showMessage(type, title, text){
-  const msgEl = document.getElementById("message");
-  const icons = {ok:"🟢", err:"🔴", msg:"ℹ️"};
-  msgEl.innerHTML = `
-    <div class="msg ${type}">
-      <div class="icon">${icons[type]||""}</div>
-      <div>
-        <strong>${title}</strong><br>
-        <div class="small">${text||""}</div>
-      </div>
-    </div>
-  `;
+  document.getElementById("lastName").value="";
+  document.getElementById("firstName").value="";
+  document.getElementById("extName").value="";
+  document.getElementById("assistanceType").value="";
+  document.getElementById("message").innerHTML="";
+  document.getElementById("results").style.display="none";
 }
 </script>
-
 </body>
 </html>
