@@ -172,8 +172,19 @@ async function startQRScanner() {
     camerasList = await Html5Qrcode.getCameras();
     if (!camerasList || camerasList.length === 0) throw "No cameras found";
 
-    // Prefer back camera first
-    const backCamera = camerasList.find(c => c.facingMode === "environment") || camerasList[0];
+    // Try to find a back camera by facingMode
+    let backCamera = camerasList.find(c => c.facingMode === "environment");
+
+    // If facingMode not available, try to guess from label
+    if (!backCamera) {
+      backCamera = camerasList.find(c => /back|rear/i.test(c.label));
+    }
+
+    // If still not found, just use the last camera (usually back)
+    if (!backCamera) {
+      backCamera = camerasList[camerasList.length - 1];
+    }
+
     currentCameraIndex = camerasList.indexOf(backCamera);
 
     showQROverlay();
@@ -208,9 +219,24 @@ async function startScannerWithCamera(cameraId) {
 
 function switchCamera() {
   if (!camerasList || camerasList.length < 2) return;
-  currentCameraIndex = (currentCameraIndex + 1) % camerasList.length;
+
+  // Move to the next camera in the list
+  const totalCams = camerasList.length;
+  let nextIndex = (currentCameraIndex + 1) % totalCams;
+
+  // If somehow the next camera is the same as current (rare), pick the next one
+  if (nextIndex === currentCameraIndex) {
+    nextIndex = (nextIndex + 1) % totalCams;
+  }
+
+  currentCameraIndex = nextIndex;
   const nextCameraId = camerasList[currentCameraIndex].id;
-  if (qrScanner) qrScanner.stop().then(() => startScannerWithCamera(nextCameraId)).catch(console.error);
+
+  if (qrScanner) {
+    qrScanner.stop()
+      .then(() => startScannerWithCamera(nextCameraId))
+      .catch(err => console.error("Failed to switch camera:", err));
+  }
 }
 
 function cancelQRScanner() {
