@@ -66,18 +66,35 @@
 
 let qrScanner;
 
-function startQRScanner(){
+async function startQRScanner(){
 
 const qrContainer = document.getElementById("qr-reader");
 qrContainer.innerHTML = "";
+document.getElementById("message").innerHTML = "";
+
+try{
 
 qrScanner = new Html5Qrcode("qr-reader");
 
-qrScanner.start(
+await qrScanner.start(
 { facingMode: "environment" },
 { fps: 10, qrbox: 250 },
 qrSuccess
 );
+
+}catch(error){
+
+if(error.message.includes("Permission")){
+showMessage("Camera permission denied. Please allow camera access.");
+}
+else if(error.message.includes("NotFound")){
+showMessage("No camera found on this device.");
+}
+else{
+showMessage("Scanner failed to start. Make sure camera is available and the site uses HTTPS.");
+}
+
+}
 
 }
 
@@ -99,7 +116,9 @@ document.getElementById("qr-reader").innerHTML = "";
 }
 
 }catch(e){
-document.getElementById("message").innerHTML="Invalid QR format";
+
+showMessage("Invalid QR format");
+
 }
 
 }
@@ -183,6 +202,7 @@ document.getElementById("message").innerHTML = msg;
 
 function resetForm(){
 document.getElementById("searchForm").reset();
+document.getElementById("message").innerHTML="";
 }
 
 </script>
