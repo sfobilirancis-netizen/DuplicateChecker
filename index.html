@@ -203,19 +203,19 @@ async function startScannerWithCamera(cameraId) {
   });
 
   const config = {
-    fps: 60,
+    fps: 60, 
     qrbox: function(viewfinderWidth, viewfinderHeight) {
         const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
         return { width: minEdge * 0.95, height: minEdge * 0.95 };
     },
     aspectRatio: 1.0,
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
     videoConstraints: {
         facingMode: /front/i.test(camerasList[currentCameraIndex].label) ? "user" : "environment",
-        zoom: 2.0,
-        focusMode: "continuous"
+        focusMode: "continuous"  // helps camera focus at 12 inches
     },
     disableFlip: /front/i.test(camerasList[currentCameraIndex].label)
-  };
+};
 
   try {
     statusEl.textContent = "📷 Starting camera...";
@@ -290,8 +290,6 @@ overlay.innerHTML = `
     <button class="btn btnPrimary" onclick="switchCamera()">🔄 Switch Camera</button>
     <button class="cancel-btn" onclick="cancelQRScanner()">❌ Cancel</button>
   </div>
-  <!-- Zoom slider for manual adjustment -->
-  <input type="range" min="1" max="3" step="0.1" value="1" id="zoomSlider" style="margin-top:12px; width:80%;">
 `;
     document.body.appendChild(overlay);
   }
