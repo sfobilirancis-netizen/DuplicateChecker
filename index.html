@@ -136,7 +136,7 @@ button.btn {
   cursor: pointer;
   font-weight: 700;
   font-size: 13px;
-  text-align: center;       /* ensure text centered */
+  text-align: center;
   transition: transform 0.08s ease, opacity 0.15s ease;
 }
 button.btn:active { transform: translateY(1px); }
@@ -144,12 +144,12 @@ button.btn:active { transform: translateY(1px); }
 button.btnPrimary {
   background: linear-gradient(135deg, var(--blue), var(--blue2));
   border-color: rgba(0, 56, 168, 0.35);
-  color: #fff !important;       /* force white text */
+  color: #fff !important;
   font-weight: 700;
   font-size: 14px;
   text-align: center;
   padding: 10px 16px;
-  white-space: nowrap;          /* prevent text from wrapping */
+  white-space: nowrap;
 }
 button.btnPrimary:hover { opacity: 0.95; }
 
@@ -334,98 +334,114 @@ const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4
 let cachedData=null;
 
 async function startQRScanner(){
-const qrContainer=document.getElementById("qr-reader");
-qrContainer.innerHTML="";
-qrScanner=new Html5Qrcode("qr-reader");
-await qrScanner.start({facingMode:"environment"},{fps:10,qrbox:250},qrSuccess);
+  const qrContainer=document.getElementById("qr-reader");
+  qrContainer.innerHTML="";
+  qrScanner=new Html5Qrcode("qr-reader");
+  await qrScanner.start({facingMode:"environment"},{fps:10,qrbox:250},qrSuccess);
 }
 
 function qrSuccess(decodedText){
-try{
-const data=JSON.parse(decodedText);
-document.getElementById("lastName").value=data.subject.lName||"";
-document.getElementById("firstName").value=data.subject.fName||"";
-document.getElementById("extName").value=data.subject.Suffix||"";
-qrScanner.stop();
-document.getElementById("qr-reader").innerHTML="";
-}catch(e){
-showMessage("err","Invalid QR format","Unable to read QR");
-}
+  try{
+    const data=JSON.parse(decodedText);
+    document.getElementById("lastName").value=data.subject.lName||"";
+    document.getElementById("firstName").value=data.subject.fName||"";
+    document.getElementById("extName").value=data.subject.Suffix||"";
+    qrScanner.stop();
+    document.getElementById("qr-reader").innerHTML="";
+  }catch(e){
+    showMessage("err","Invalid QR format","Unable to read QR");
+  }
 }
 
 async function fetchData(){
-if(cachedData) return cachedData;
-const response=await fetch(CSV_URL);
-const csvText=await response.text();
-cachedData=parseCSV(csvText);
-return cachedData;
+  if(cachedData) return cachedData;
+  const response=await fetch(CSV_URL);
+  const csvText=await response.text();
+  cachedData=parseCSV(csvText);
+  return cachedData;
 }
 
 function parseCSV(csv){
-return csv.trim().split("\n").slice(1).map((r,i)=>{
-const c=r.split(",");
-return{date:c[0],last:c[1],first:c[2],ext:c[3],type:c[4],row:i+2}
-})
+  return csv.trim().split("\n").slice(1).map((r,i)=>{
+    const c=r.split(",");
+    return{date:c[0],last:c[1],first:c[2],ext:c[3],type:c[4],row:i+2}
+  })
+}
+
+function getThreeMonthsAgoMs_() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate() + 1);
+  threeMonthsAgo.setHours(0, 0, 0, 0);
+
+  return threeMonthsAgo.getTime();
 }
 
 async function checkDuplicate(){
-const last=document.getElementById("lastName").value.trim().toLowerCase();
-const first=document.getElementById("firstName").value.trim().toLowerCase();
-const type=document.getElementById("assistanceType").value.trim().toLowerCase();
+  const last = document.getElementById("lastName").value.trim().toLowerCase();
+  const first = document.getElementById("firstName").value.trim().toLowerCase();
+  const type = document.getElementById("assistanceType").value.trim().toLowerCase();
 
-if(!last||!first||!type){showMessage("err","Missing Information","Fill required fields");return;}
+  if(!last || !first || !type){ 
+    showMessage("err","Missing Information","Fill required fields"); 
+    return;
+  }
 
-showMessage("msg","Searching","Checking records...");
-const data=await fetchData();
-const matches=data.filter(r=>r.last.toLowerCase()==last&&r.first.toLowerCase()==first&&r.type.toLowerCase()==type);
+  showMessage("msg","Searching","Checking records...");
+  const data = await fetchData();
+  const matches = data.filter(r => r.last.toLowerCase() === last && r.first.toLowerCase() === first && r.type.toLowerCase() === type);
 
-if(matches.length===0){
-showMessage("ok","No duplicate found","Beneficiary may proceed");
-document.getElementById("results").style.display="none";
-return;
-}
+  if(matches.length === 0){
+    showMessage("ok","No duplicate found","Beneficiary may proceed");
+    document.getElementById("results").style.display = "none";
+    return;
+  }
 
-showMessage("err","Duplicate Found",matches.length+" record(s) found");
+  showMessage("err","Duplicate Found",matches.length + " record(s) found");
 
-let html=`<table>
-<thead><tr>
-<th>Date</th><th>Last</th><th>First</th><th>Ext</th><th>Type</th><th>Row #</th>
-</tr></thead><tbody>`;
+  const threeMonthsAgoMs = getThreeMonthsAgoMs_();
+  let html = `<table>
+    <thead><tr>
+      <th>Date of Claim</th><th>Last</th><th>First</th><th>Ext</th><th>Type</th><th>Row # / Next Claim</th>
+    </tr></thead><tbody>`;
 
-matches.forEach(m=>{
-html+=`<tr>
-<td>${m.date}</td>
-<td><span class="pill">${m.last}</span></td>
-<td><span class="pill">${m.first}</span></td>
-<td><span class="pill">${m.ext}</span></td>
-<td><span class="pill type">${m.type}</span></td>
-<td><span class="pill">${m.row}</span></td>
-</tr>`;
-});
+  matches.forEach(m => {
+    const claimDateMs = new Date(m.date).getTime();
+    let rowDisplay = claimDateMs >= threeMonthsAgoMs ? "Next claim" : m.row;
+    
+    html += `<tr>
+      <td>${m.date}</td>
+      <td><span class="pill">${m.last}</span></td>
+      <td><span class="pill">${m.first}</span></td>
+      <td><span class="pill">${m.ext}</span></td>
+      <td><span class="pill type">${m.type}</span></td>
+      <td><span class="pill">${rowDisplay}</span></td>
+    </tr>`;
+  });
 
-html+=`</tbody></table>`;
-
-document.getElementById("resultsTableWrap").innerHTML=html;
-document.getElementById("results").style.display="block";
+  html += `</tbody></table>`;
+  document.getElementById("resultsTableWrap").innerHTML = html;
+  document.getElementById("results").style.display = "block";
 }
 
 function showMessage(type,title,detail){
-const cls=type==="err"?"msg err":type==="ok"?"msg ok":"msg";
-document.getElementById("message").innerHTML=
-`<div class="${cls}"><div class="icon"></div>
-<div><strong>${title}</strong>${detail?`<div class="small">${detail}</div>`:""}</div>
-</div>`;
+  const cls=type==="err"?"msg err":type==="ok"?"msg ok":"msg";
+  document.getElementById("message").innerHTML=
+  `<div class="${cls}"><div class="icon"></div>
+  <div><strong>${title}</strong>${detail?`<div class="small">${detail}</div>`:""}</div>
+  </div>`;
 }
 
 function resetForm(){
-document.getElementById("lastName").value="";
-document.getElementById("firstName").value="";
-document.getElementById("extName").value="";
-document.getElementById("assistanceType").value="";
-document.getElementById("message").innerHTML="";
-document.getElementById("results").style.display="none";
-document.getElementById("resultsTableWrap").innerHTML="";
-document.getElementById("qr-reader").innerHTML="";
+  document.getElementById("lastName").value="";
+  document.getElementById("firstName").value="";
+  document.getElementById("extName").value="";
+  document.getElementById("assistanceType").value="";
+  document.getElementById("message").innerHTML="";
+  document.getElementById("results").style.display="none";
+  document.getElementById("resultsTableWrap").innerHTML="";
+  document.getElementById("qr-reader").innerHTML="";
 }
 
 </script>
