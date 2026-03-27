@@ -1,3 +1,6 @@
+Here's the modified code with improved QR scanning for close-range scanning. The key changes are in the QR scanner configuration and camera settings:
+
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -91,7 +94,7 @@ tbody tr:hover td { background:#f8fafc; }
 #qr-reader::before {
   content:"";
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  width:85%; height:85%; border:3px solid #00ff88; border-top-color:transparent; border-left-color:transparent; border-radius:12px; box-sizing:border-box;
+  width:65%; height:65%; border:3px solid #00ff88; border-top-color:transparent; border-left-color:transparent; border-radius:12px; box-sizing:border-box;
   pointer-events:none;
   box-shadow:0 0 0 3px rgba(0,255,136,0.5);
   animation: scanGlow 2s infinite;
@@ -183,13 +186,13 @@ let currentCameraIndex = 0;
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv";
 let cachedData = null;
 
-/* ===== QR SCANNER ===== */
+/* ===== QR SCANNER - OPTIMIZED FOR CLOSE RANGE ===== */
 async function startQRScanner() {
   try {
     camerasList = await Html5Qrcode.getCameras();
     if (!camerasList || camerasList.length === 0) throw "No cameras found";
 
-    // Front camera first
+    // Prioritize front camera (selfie camera) for close-range scanning
     const frontCamera = camerasList.find(c => c.facingMode === "user") || camerasList[0];
     currentCameraIndex = camerasList.indexOf(frontCamera);
 
@@ -204,15 +207,42 @@ async function startQRScanner() {
 async function startScannerWithCamera(cameraId) {
   const statusEl = document.getElementById("qr-status");
   qrScanner = new Html5Qrcode("qr-reader", {
-    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+    // Enhanced configuration for close-range scanning
+    experimentalFeatures: {
+      useBarCodeDetectorIfSupported: true,
+      // Enable legacy canvas size mode for better close-range detection
+      legacyCanvasSizeMode: true
+    }
   });
 
-  const config = { fps:30, qrbox:{width:350,height:350}, aspectRatio:1.0, disableFlip:false };
+  // Optimized config for close-range QR scanning
+  const config = { 
+    fps: 15,  // Reduced FPS for better processing
+    qrbox: {width: 280, height: 280},  // Smaller scan area for close QR codes
+    aspectRatio: 1.0,
+    disableFlip: false,
+    // Critical settings for close-range scanning
+    videoConstraints: {
+      width: { ideal: 1280, max: 1920 },
+      height: { ideal: 720, max: 1080 },
+      facingMode: "user",  // Force front camera
+      focusMode: "continuous",  // Continuous autofocus
+      torch: false
+    },
+    // Increase scan region and reduce margins
+    scanRegion: {
+      topPadding: 0.1,
+      rightPadding: 0.1,
+      bottomPadding: 0.1,
+      leftPadding: 0.1
+    }
+  };
 
   try {
     statusEl.textContent = "📷 Starting camera...";
     await qrScanner.start(cameraId, config, qrSuccess, qrErrorCallback, qrStatusCallback);
-    statusEl.textContent = "✅ Ready! Point QR code at scanner";
+    statusEl.textContent = "✅ Ready! Hold QR 4-12 inches from camera";
   } catch(err) {
     console.error(err);
     statusEl.textContent = "❌ Camera failed to start";
@@ -242,7 +272,7 @@ function showQROverlay() {
     overlay.id = "qr-overlay";
     overlay.innerHTML = `
       <label>📱 Scan Beneficiary QR Code</label>
-      <div id="qr-instructions">Hold steady • Keep QR in frame • Good lighting helps</div>
+      <div id="qr-instructions">Hold QR 4-12 inches from camera • Keep steady • Good lighting</div>
       <div id="qr-reader"></div>
       <div id="qr-status">🔍 Initializing camera...</div>
       <div class="camera-buttons">
@@ -297,7 +327,7 @@ function addThreeMonths(dateStr){
 }
 
 async function checkDuplicate() {
-  const last = document.getElementById("lastName").value.trim().toLowerCase();
+    const last = document.getElementById("lastName").value.trim().toLowerCase();
   const first = document.getElementById("firstName").value.trim().toLowerCase();
   const type = document.getElementById("assistanceType").value.trim().toLowerCase();
   if (!last || !first || !type) { showMessage("err","Missing Information","Fill required fields"); return; }
@@ -307,7 +337,7 @@ async function checkDuplicate() {
   const matches = data.filter(r => r.last.toLowerCase()===last && r.first.toLowerCase()===first && r.type.toLowerCase()===type);
   if(matches.length === 0){ 
     showMessage("ok","No duplicate found","Beneficiary may proceed"); 
-    document.getElementById(    "results").style.display = "none";
+    document.getElementById("results").style.display = "none";
     return; 
   }
 
