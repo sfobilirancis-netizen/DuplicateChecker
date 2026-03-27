@@ -158,7 +158,7 @@ tbody tr:hover td { background:#f8fafc; }
         <div>
           <label>Type of Assistance</label>
           <select id="assistanceType">
-            <option value="">Select type</option>
+            <option value="">Select type of Assistance</option>
             <option>Cash Relief Assistance</option>
             <option>Medical Assistance</option>
             <option>Food Assistance</option>
@@ -377,7 +377,7 @@ async function checkDuplicate() {
     return;
   }
 
-  let html = `<table><thead><tr><th>Claim Date</th><th>Last Name</th><th>First Name</th><th>Extension</th><th>Type</th><th>Next Eligible Claim Date</th></tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>Claim Date</th><th>Last Name</th><th>First Name</th><th>Extension</th><th>Type of Assistance</th><th>Next Eligible Claim Date</th></tr></thead><tbody>`;
   matches.forEach(m=>html+=`<tr><td>${m.date}</td><td>${m.last}</td><td>${m.first}</td><td>${m.ext}</td><td>${m.type}</td><td>${addThreeMonths(m.date)}</td></tr>`);
   html += "</tbody></table>";
   document.getElementById("resultsTableWrap").innerHTML = html;
