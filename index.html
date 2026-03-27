@@ -88,18 +88,30 @@ tbody tr:hover td { background:#f8fafc; }
 #qr-instructions { color:#fff; font-size:14px; margin-bottom:12px; text-align:center; background: rgba(255,255,255,0.1); padding:12px 20px; border-radius:12px; backdrop-filter:blur(10px); }
 #qr-reader { width:90vw; max-width:500px; max-height:70vh; aspect-ratio:1/1; border-radius:16px; background:#000; overflow:hidden; position:relative; box-shadow:0 20px 40px rgba(0,0,0,0.5); }
 #qr-reader video { object-fit: contain !important; width:100% !important; height:100% !important; }
-#qr-reader::before {
-  content:"";
-  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  width:85%; height:85%; border:3px solid #00ff88; border-top-color:transparent; border-left-color:transparent; border-radius:12px; box-sizing:border-box;
-  pointer-events:none;
-  box-shadow:0 0 0 3px rgba(0,255,136,0.5);
+
+/* ===== FOUR L-SHAPED CORNERS ===== */
+#qr-reader .corner {
+  position:absolute;
+  width:30px; height:30px;
+  border:4px solid #00ff88;
+  box-sizing:border-box;
+}
+#qr-reader .corner.top-left { top:0; left:0; border-right:none; border-bottom:none; }
+#qr-reader .corner.top-right { top:0; right:0; border-left:none; border-bottom:none; }
+#qr-reader .corner.bottom-left { bottom:0; left:0; border-right:none; border-top:none; }
+#qr-reader .corner.bottom-right { bottom:0; right:0; border-left:none; border-top:none; }
+
+/* ===== SCAN GLOW ===== */
+#qr-reader .scan-glow {
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  border-radius:16px; box-shadow:0 0 20px #00ff88; pointer-events:none;
   animation: scanGlow 2s infinite;
 }
 @keyframes scanGlow {
-  0%,100% { box-shadow:0 0 0 3px rgba(0,255,136,0.5),0 0 20px rgba(0,255,136,0.3); }
-  50% { box-shadow:0 0 0 3px rgba(0,255,136,0.8),0 0 30px rgba(0,255,136,0.6); }
+  0%,100% { box-shadow:0 0 20px #00ff88, 0 0 0 4px rgba(0,255,136,0.5); }
+  50% { box-shadow:0 0 30px #00ff88, 0 0 0 6px rgba(0,255,136,0.7); }
 }
+
 #qr-status { margin-top:16px; padding:10px 16px; border-radius:12px; background:rgba(255,255,255,0.15); color:#fff; font-size:14px; font-weight:500; text-align:center; min-height:20px; }
 #qr-overlay button.cancel-btn { margin-top:20px; padding:12px 24px; border-radius:12px; border:none; background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; font-weight:700; font-size:16px; cursor:pointer; box-shadow:0 4px 12px rgba(239,68,68,0.4); }
 #qr-overlay button.cancel-btn:hover { opacity:0.9; transform:translateY(-1px); }
@@ -240,7 +252,13 @@ function showQROverlay() {
     overlay.innerHTML = `
       <label>📱 Scan Beneficiary QR Code</label>
       <div id="qr-instructions">Hold steady • Keep QR in frame • Good lighting helps</div>
-      <div id="qr-reader"></div>
+      <div id="qr-reader">
+        <div class="corner top-left"></div>
+        <div class="corner top-right"></div>
+        <div class="corner bottom-left"></div>
+        <div class="corner bottom-right"></div>
+        <div class="scan-glow"></div>
+      </div>
       <div id="qr-status">🔍 Initializing camera...</div>
       <div class="camera-buttons">
         <button class="btn btnPrimary" onclick="switchCamera()">🔄 Switch Camera</button>
@@ -295,29 +313,29 @@ function addThreeMonths(dateStr){
 async function checkDuplicate() {
   const last = document.getElementById("lastName").value.trim().toLowerCase();
   const first = document.getElementById("firstName").value.trim().toLowerCase();
-  const type = document.getElementById("assistanceType").value.trim().toLowerCase();
-  if (!last || !first || !type) { showMessage("err","Missing Information","Fill required fields"); return; }
+  const ext = document.getElementById("extName").value.trim().toLowerCase();
+  const type = document.getElementById("assistanceType").value;
 
-  showMessage("msg","Searching","Checking records...");
   const data = await fetchData();
-  const matches = data.filter(r => r.last.toLowerCase()===last && r.first.toLowerCase()===first && r.type.toLowerCase()===type);
-  if(matches.length === 0){ 
-    showMessage("ok","No duplicate found","Beneficiary may proceed");
-    document.getElementById("results").style.display="none";
-    return;
-  }
+  const results = data.filter(r=>r.last.toLowerCase()===last && r.first.toLowerCase()===first && r.ext.toLowerCase()===ext && r.type===type);
 
-  let html = `<table><thead><tr><th>Date</th><th>Last Name</th><th>First Name</th><th>Extension</th><th>Type</th><th>Expiry</th></tr></thead><tbody>`;
-  matches.forEach(m=>html+=`<tr><td>${m.date}</td><td>${m.last}</td><td>${m.first}</td><td>${m.ext}</td><td>${m.type}</td><td>${addThreeMonths(m.date)}</td></tr>`);
-  html += "</tbody></table>";
-  document.getElementById("resultsTableWrap").innerHTML = html;
-  document.getElementById("results").style.display="block";
-  showMessage("err","Duplicate Found",`There are ${matches.length} record(s)`);
+  const wrap = document.getElementById("resultsTableWrap");
+  if(results.length){
+    wrap.innerHTML = `<table><thead><tr><th>#</th><th>Date</th><th>Last Name</th><th>First Name</th><th>Ext</th><th>Type</th><th>Valid Until</th></tr></thead><tbody>`+
+      results.map(r=>`<tr><td>${r.row}</td><td>${r.date}</td><td>${r.last}</td><td>${r.first}</td><td>${r.ext}</td><td>${r.type}</td><td>${addThreeMonths(r.date)}</td></tr>`).join("")+
+      `</tbody></table>`;
+    document.getElementById("results").style.display="block";
+    showMessage("err","Duplicate Found","The beneficiary already received assistance");
+  } else {
+    wrap.innerHTML="";
+    document.getElementById("results").style.display="none";
+    showMessage("ok","No Duplicate Found","Beneficiary is eligible");
+  }
 }
 
-function showMessage(type, title, text="") {
+function showMessage(type,title,msg){
   const container = document.getElementById("message");
-  container.innerHTML = `<div class="msg ${type}"><div class="icon"></div><div><strong>${title}</strong>${text ? `<div class="small">${text}</div>` : ""}</div></div>`;
+  container.innerHTML = `<div class="msg ${type}"><div class="icon"></div><div><strong>${title}</strong><div class="small">${msg}</div></div></div>`;
 }
 
 function resetForm() {
