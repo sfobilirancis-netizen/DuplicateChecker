@@ -248,8 +248,6 @@ tbody tr:hover td{background:#f8fafc}
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 320px;
-  height: 320px;
   z-index: 9999;
   background: #000;
   padding: 10px;
@@ -363,11 +361,20 @@ async function startQRScanner(){
 
   const qrContainer=document.getElementById("qr-reader");
   qrContainer.style.display = "block";
-  qrContainer.innerHTML="";
-  qrScanner=new Html5Qrcode("qr-reader");
+  qrContainer.innerHTML = "";
+
+  qrScanner = new Html5Qrcode("qr-reader");
+
   await qrScanner.start(
-    {facingMode:"environment"},
-    {fps:10,qrbox:250},
+    { facingMode: "environment" },
+    { 
+      fps: 10,
+      qrbox: (viewfinderWidth, viewfinderHeight) => {
+        const minEdge = Math.min(viewfinderWidth, viewfinderHeight) * 0.7;
+        return { width: minEdge, height: minEdge };
+      },
+      aspectRatio: 1.0
+    },
     qrSuccess
   );
 }
