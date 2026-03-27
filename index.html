@@ -148,6 +148,7 @@ border-radius:12px;
 border:1px solid var(--border);
 display:flex;
 gap:10px;
+align-items:flex-start;
 }
 
 .msg.ok{background:#f0fdf4;border-color:#bbf7d0}
@@ -163,40 +164,58 @@ margin-top:4px;
 .msg.ok .icon{background:#22c55e}
 .msg.err .icon{background:#ef4444}
 
+.msg strong{font-size:13px}
+.msg .small{font-size:12px;color:var(--muted);margin-top:2px}
+
 .results{
 margin-top:14px;
 border:1px solid var(--border);
 border-radius:var(--radius);
 overflow:hidden;
+background:#fff;
 }
 
 .resultsHeader{
-padding:12px;
-background:rgba(0,56,168,0.06);
+padding:12px 14px;
 border-bottom:1px solid var(--border);
+background:linear-gradient(90deg,rgba(0,56,168,0.06),rgba(206,17,38,0.06));
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
 font-weight:700;
 }
 
-table{
-width:100%;
-border-collapse:collapse;
-min-width:820px;
+.pill{
+display:inline-flex;
+align-items:center;
+padding:6px 10px;
+border-radius:999px;
+border:1px solid var(--border);
+background:#f8fafc;
+font-size:12px;
+font-weight:700;
+color:#0f172a;
+white-space:nowrap;
+}
+.pill.type{
+border-color:rgba(206,17,38,0.25);
+background:rgba(206,17,38,0.08);
+color:#7f1d1d;
 }
 
+.tableWrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:820px}
 thead th{
+position:sticky;
+top:0;
 background:var(--blue);
 color:#fff;
 padding:12px;
 font-size:12px;
 text-align:left;
 }
-
-tbody td{
-padding:12px;
-border-bottom:1px solid var(--border);
-font-size:13px;
-}
-
+tbody td{padding:12px;border-bottom:1px solid var(--border);font-size:13px}
 tbody tr:hover td{background:#f8fafc}
 
 #qr-reader{margin-top:15px}
@@ -276,7 +295,7 @@ tbody tr:hover td{background:#f8fafc}
 
 <div id="results" class="results" style="display:none;">
 <div class="resultsHeader">Match Results</div>
-<div id="resultsTableWrap"></div>
+<div class="tableWrap" id="resultsTableWrap"></div>
 </div>
 
 </div>
@@ -287,134 +306,76 @@ tbody tr:hover td{background:#f8fafc}
 <script>
 
 let qrScanner;
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv";
+let cachedData=null;
 
 async function startQRScanner(){
-
 const qrContainer=document.getElementById("qr-reader");
 qrContainer.innerHTML="";
-
 qrScanner=new Html5Qrcode("qr-reader");
-
-await qrScanner.start(
-{facingMode:"environment"},
-{fps:10,qrbox:250},
-qrSuccess
-);
-
+await qrScanner.start({facingMode:"environment"},{fps:10,qrbox:250},qrSuccess);
 }
 
 function qrSuccess(decodedText){
-
 try{
-
 const data=JSON.parse(decodedText);
-
 document.getElementById("lastName").value=data.subject.lName||"";
 document.getElementById("firstName").value=data.subject.fName||"";
 document.getElementById("extName").value=data.subject.Suffix||"";
-
 qrScanner.stop();
 document.getElementById("qr-reader").innerHTML="";
-
 }catch(e){
-
 showMessage("err","Invalid QR format","Unable to read QR");
-
 }
-
 }
-
-const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv";
-
-let cachedData=null;
 
 async function fetchData(){
-
 if(cachedData) return cachedData;
-
 const response=await fetch(CSV_URL);
 const csvText=await response.text();
-
 cachedData=parseCSV(csvText);
-
 return cachedData;
-
 }
 
 function parseCSV(csv){
-
-const rows=csv.trim().split("\n").slice(1);
-
-return rows.map((r,i)=>{
-
+return csv.trim().split("\n").slice(1).map((r,i)=>{
 const c=r.split(",");
-
-return{
-date:c[0],
-last:c[1],
-first:c[2],
-ext:c[3],
-type:c[4],
-row:i+2
-}
-
+return{date:c[0],last:c[1],first:c[2],ext:c[3],type:c[4],row:i+2}
 })
-
 }
 
 async function checkDuplicate(){
-
 const last=document.getElementById("lastName").value.trim().toLowerCase();
 const first=document.getElementById("firstName").value.trim().toLowerCase();
 const type=document.getElementById("assistanceType").value.trim().toLowerCase();
 
-if(!last||!first||!type){
-showMessage("err","Missing Information","Fill required fields");
-return;
-}
+if(!last||!first||!type){showMessage("err","Missing Information","Fill required fields");return;}
 
 showMessage("msg","Searching","Checking records...");
-
 const data=await fetchData();
-
-const matches=data.filter(r=>
-r.last.toLowerCase()==last &&
-r.first.toLowerCase()==first &&
-r.type.toLowerCase()==type
-);
+const matches=data.filter(r=>r.last.toLowerCase()==last&&r.first.toLowerCase()==first&&r.type.toLowerCase()==type);
 
 if(matches.length===0){
-
 showMessage("ok","No duplicate found","Beneficiary may proceed");
 document.getElementById("results").style.display="none";
 return;
-
 }
 
 showMessage("err","Duplicate Found",matches.length+" record(s) found");
 
 let html=`<table>
-<thead>
-<tr>
-<th>Date</th>
-<th>Last</th>
-<th>First</th>
-<th>Ext</th>
-<th>Type</th>
-<th>Row #</th>
-</tr>
-</thead>
-<tbody>`;
+<thead><tr>
+<th>Date</th><th>Last</th><th>First</th><th>Ext</th><th>Type</th><th>Row #</th>
+</tr></thead><tbody>`;
 
 matches.forEach(m=>{
-html+=`
-<tr>
+html+=`<tr>
 <td>${m.date}</td>
-<td>${m.last}</td>
-<td>${m.first}</td>
-<td>${m.ext}</td>
-<td>${m.type}</td>
-<td>${m.row}</td>
+<td><span class="pill">${m.last}</span></td>
+<td><span class="pill">${m.first}</span></td>
+<td><span class="pill">${m.ext}</span></td>
+<td><span class="pill type">${m.type}</span></td>
+<td><span class="pill">${m.row}</span></td>
 </tr>`;
 });
 
@@ -422,35 +383,25 @@ html+=`</tbody></table>`;
 
 document.getElementById("resultsTableWrap").innerHTML=html;
 document.getElementById("results").style.display="block";
-
 }
 
 function showMessage(type,title,detail){
-
 const cls=type==="err"?"msg err":type==="ok"?"msg ok":"msg";
-
 document.getElementById("message").innerHTML=
-`<div class="${cls}">
-<div class="icon"></div>
-<div>
-<strong>${title}</strong>
-<div style="font-size:12px">${detail}</div>
-</div>
+`<div class="${cls}"><div class="icon"></div>
+<div><strong>${title}</strong>${detail?`<div class="small">${detail}</div>`:""}</div>
 </div>`;
-
 }
 
 function resetForm(){
-
 document.getElementById("lastName").value="";
 document.getElementById("firstName").value="";
 document.getElementById("extName").value="";
 document.getElementById("assistanceType").value="";
-
 document.getElementById("message").innerHTML="";
 document.getElementById("results").style.display="none";
+document.getElementById("resultsTableWrap").innerHTML="";
 document.getElementById("qr-reader").innerHTML="";
-
 }
 
 </script>
