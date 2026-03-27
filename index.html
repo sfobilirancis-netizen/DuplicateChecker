@@ -172,8 +172,9 @@ async function startQRScanner() {
     camerasList = await Html5Qrcode.getCameras();
     if (!camerasList || camerasList.length === 0) throw "No cameras found";
 
-    const frontCamera = camerasList.find(c => c.facingMode === "user") || camerasList[0];
-    currentCameraIndex = camerasList.indexOf(frontCamera);
+    // Use BACK camera by default
+    const backCamera = camerasList.find(c => c.facingMode === "environment") || camerasList[0];
+    currentCameraIndex = camerasList.indexOf(backCamera);
 
     showQROverlay();
     await startScannerWithCamera(camerasList[currentCameraIndex].id);
@@ -306,19 +307,17 @@ async function checkDuplicate() {
 
 function showMessage(type, title, text="") {
   const container = document.getElementById("message");
-  container.innerHTML = `<div class="msg ${type}"><div class="icon"></div><div><strong>${title}</strong>${text ? `<div class="small">${text}</div>` : ""}</div></div>`;
+  container.innerHTML = `<div class="msg ${type}"><div class="icon"></div><div><strong>${title}</strong>${text?'<div class="small">'+text+"</div>":""}</div></div>`;
 }
 
 function resetForm() {
-  document.getElementById("lastName").value="";
-  document.getElementById("firstName").value="";
-  document.getElementById("extName").value="";
-  document.getElementById("assistanceType").value="";
-  document.getElementById("message").innerHTML="";
+  document.getElementById("lastName").value = "";
+  document.getElementById("firstName").value = "";
+  document.getElementById("extName").value = "";
+  document.getElementById("assistanceType").value = "";
+  document.getElementById("message").innerHTML = "";
   document.getElementById("results").style.display="none";
 }
 </script>
 </body>
 </html>
-
-
