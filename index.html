@@ -91,13 +91,32 @@ tbody tr:hover td{background:#f8fafc}
   border-radius: 12px;
   background:#000;
   overflow:hidden;
+  position: relative;
 }
-
 /* Force camera video to fill square container */
 #qr-reader video {
   object-fit: cover !important;
   width: 100% !important;
   height: 100% !important;
+}
+
+/* Scanning frame */
+#qr-reader::before {
+  content:"";
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:80%; height:80%;
+  border: 4px solid #0bf;
+  border-radius: 8px;
+  box-sizing:border-box;
+  pointer-events:none;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 10px #0bf; }
+  50% { box-shadow: 0 0 20px #0bf; }
+  100% { box-shadow: 0 0 10px #0bf; }
 }
 </style>
 </head>
@@ -182,7 +201,7 @@ async function startQRScanner(){
   qrScanner=new Html5Qrcode("qr-reader");
   await qrScanner.start(
     { facingMode:"environment" },
-    { fps:10, qrbox:boxSize }, // square box
+    { fps:10, qrbox:boxSize },
     qrSuccess
   );
 }
