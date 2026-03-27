@@ -189,44 +189,31 @@
       height: 100% !important;
     }
 
-    /* === Scanning Frame - Corners Only === */
-    #qr-reader::before {
-      content: "";
-      position: absolute;
-      width: 80%; height: 80%;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      border: none;
-    }
-    #qr-reader::after {
-      content: "";
-      position: absolute;
-      width: 80%; height: 80%;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      border: 4px solid transparent;
-      border-top-color: #fff;
-      border-left-color: #fff;
-      border-bottom-color: #fff;
-      border-right-color: #fff;
-      border-radius: 8px;
-      box-sizing: border-box;
-    }
+    /* === Corner frame === */
     #qr-reader .corner {
       position: absolute;
-      width: 20px; height: 20px;
+      width: 30px; height: 30px;
       border: 4px solid #fff;
     }
-    /* Top-left */
     #qr-reader .corner.tl { top:0; left:0; border-right:0; border-bottom:0; }
-    /* Top-right */
     #qr-reader .corner.tr { top:0; right:0; border-left:0; border-bottom:0; }
-    /* Bottom-left */
     #qr-reader .corner.bl { bottom:0; left:0; border-right:0; border-top:0; }
-    /* Bottom-right */
     #qr-reader .corner.br { bottom:0; right:0; border-left:0; border-top:0; }
+
+    /* === Scanning laser === */
+    #qr-reader .laser {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255,0,0,0.8);
+      animation: scan 2s infinite;
+    }
+    @keyframes scan {
+      0% { top: 0; }
+      50% { top: 100%; }
+      100% { top: 0; }
+    }
   </style>
 </head>
 
@@ -300,7 +287,13 @@
     async function startQRScanner() {
       let overlay = document.createElement("div");
       overlay.id = "qr-overlay";
-      overlay.innerHTML = `<label>Scan QR Code</label><div id="qr-reader"></div>`;
+      overlay.innerHTML = `<label>Scan QR Code</label><div id="qr-reader">
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <div class="laser"></div>
+      </div>`;
       document.body.appendChild(overlay);
 
       const container = document.getElementById("qr-reader");
