@@ -65,13 +65,13 @@ thead th{position:sticky;top:0;background:var(--blue);color:#fff;padding:12px;fo
 tbody td{padding:12px;border-bottom:1px solid var(--border);font-size:13px}
 tbody tr:hover td{background:#f8fafc}
 
-/* QR Scanner Overlay - IMPROVED */
+/* QR Scanner Overlay - OPTIMIZED */
 #qr-overlay {
   position: fixed;
   top: 0; left:0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0,0,0,0.9);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -83,88 +83,133 @@ tbody tr:hover td{background:#f8fafc}
 #qr-overlay label {
   color: #fff;
   font-weight: 700;
-  font-size: 20px;
-  margin-bottom: 16px;
+  font-size: 22px;
+  margin-bottom: 12px;
   text-align: center;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 #qr-instructions {
   color: #fff;
-  font-size: 14px;
-  margin-bottom: 12px;
+  font-size: 15px;
+  margin-bottom: 16px;
   text-align: center;
-  background: rgba(255,255,255,0.1);
-  padding: 12px 20px;
+  background: rgba(255,255,255,0.12);
+  padding: 14px 24px;
   border-radius: 12px;
+  backdrop-filter: blur(12px);
+}
+#qr-camera-selector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+#qr-camera-selector button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
   backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+#qr-camera-selector button.active {
+  background: linear-gradient(135deg, var(--blue), var(--blue2));
+  box-shadow: 0 4px 12px rgba(0,56,168,0.4);
+}
+#qr-camera-selector button:hover {
+  background: rgba(255,255,255,0.3);
+  transform: translateY(-1px);
 }
 #qr-reader {
-  width: 90vw;
-  max-width: 500px;
-  max-height: 70vh;
+  width: 95vw;
+  max-width: 550px;
+  max-height: 75vh;
   aspect-ratio:1/1;
-  border-radius: 16px;
+  border-radius: 20px;
   background:#000;
   overflow:hidden;
   position: relative;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.6);
 }
 #qr-reader video {
   object-fit: cover !important;
   width: 100% !important;
   height: 100% !important;
 }
-/* Larger scanning frame with better visibility */
+/* Enhanced scanning frame */
 #qr-reader::before {
   content:"";
   position:absolute;
   top:50%; left:50%;
   transform:translate(-50%,-50%);
-  width:85%; height:85%;
-  border: 3px solid #00ff88;
+  width:90%; height:90%;
+  border: 4px solid #00ff88;
   border-top-color: transparent;
   border-left-color: transparent;
-  border-radius: 12px;
+  border-radius: 16px;
   box-sizing:border-box;
   pointer-events:none;
-  box-shadow: 0 0 0 3px rgba(0,255,136,0.5);
-  animation: scanGlow 2s infinite;
+  box-shadow: 0 0 0 4px rgba(0,255,136,0.6);
+  animation: scanGlow 1.5s infinite;
 }
 @keyframes scanGlow {
   0%, 100% { 
-    box-shadow: 0 0 0 3px rgba(0,255,136,0.5), 0 0 20px rgba(0,255,136,0.3);
+    box-shadow: 0 0 0 4px rgba(0,255,136,0.6), 0 0 25px rgba(0,255,136,0.4);
   }
   50% { 
-    box-shadow: 0 0 0 3px rgba(0,255,136,0.8), 0 0 30px rgba(0,255,136,0.6);
+    box-shadow: 0 0 0 4px rgba(0,255,136,0.9), 0 0 40px rgba(0,255,136,0.7);
   }
 }
 /* QR Status */
 #qr-status {
-  margin-top: 16px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-  min-height: 20px;
-}
-/* Cancel button */
-#qr-overlay button.cancel-btn {
   margin-top: 20px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  min-height: 24px;
+}
+/* Action buttons */
+#qr-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+#qr-overlay button.cancel-btn,
+#qr-overlay button.switch-camera {
   padding: 12px 24px;
   border-radius: 12px;
   border: none;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: #fff;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(239,68,68,0.4);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.2s ease;
 }
-#qr-overlay button.cancel-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-#qr-overlay button.cancel-btn:active { transform: translateY(0); }
+#qr-overlay button.cancel-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+#qr-overlay button.switch-camera {
+  background: linear-gradient(135deg, var(--blue), var(--blue2));
+}
+#qr-overlay button:hover { 
+  opacity: 0.9; 
+  transform: translateY(-2px); 
+}
+#qr-overlay button:active { 
+  transform: translateY(0); 
+}
 </style>
 </head>
 
@@ -233,19 +278,26 @@ tbody tr:hover td{background:#f8fafc}
 
 <script>
 let qrScanner;
+let availableCameras = [];
+let currentCameraId = null;
+let isFirstScan = true;
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv";
 let cachedData=null;
 
 async function startQRScanner(){
-  // Request camera permission first
   try {
-    await Html5Qrcode.getCameras();
+    // Get available cameras
+    availableCameras = await Html5Qrcode.getCameras();
+    if (availableCameras.length === 0) {
+      showMessage("err", "No Cameras Found", "Please check camera permissions");
+      return;
+    }
   } catch(e) {
     showMessage("err", "Camera Access Denied", "Please enable camera permission and try again");
     return;
   }
 
-  // Create overlay
+  // Create overlay with camera selector
   let overlay=document.createElement("div");
   overlay.id="qr-overlay";
   overlay.innerHTML=`
@@ -253,47 +305,135 @@ async function startQRScanner(){
     <div id="qr-instructions">
       Hold steady • Keep QR in frame • Good lighting helps
     </div>
+    <div id="qr-camera-selector"></div>
     <div id="qr-reader"></div>
     <div id="qr-status">🔍 Initializing camera...</div>
-    <button class="cancel-btn" onclick="cancelQRScanner()">❌ Cancel</button>
+    <div id="qr-actions">
+      <button class="switch-camera" onclick="switchCamera()">🔄 Switch Camera</button>
+      <button class="cancel-btn" onclick="cancelQRScanner()">❌ Cancel</button>
+    </div>
   `;
   document.body.appendChild(overlay);
+
+  // Populate camera selector
+  populateCameraSelector();
 
   const container=document.getElementById("qr-reader");
   const statusEl=document.getElementById("qr-status");
   
-  // Optimized scanner config for better detection
+  // **OPTIMIZED SCANNER CONFIG** - Much better detection
   qrScanner=new Html5Qrcode("qr-reader", {
-    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+    experimentalFeatures: {
+      useBarCodeDetectorIfSupported: true,
+      useWorkerIfSupported: true
+    }
   });
 
   const config = {
-    fps: 30,  // Increased FPS for faster detection
-    qrbox: { width: 350, height: 350 },  // Larger scan area
+    fps: 25,           // High FPS for smooth scanning
+    qrbox: { width: 400, height: 400 },  // Larger scan area
     aspectRatio: 1.0,
     disableFlip: false,
-    rememberLastUsedCamera: true
+    gotQrCodeSuccessCallback: qrSuccess,  // Direct success callback
+    // Focus settings for better clarity
+    focusMode: Html5QrcodeScanVisibilityConfigs.OVERLAY,
+    videoConstraints: {
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+      facingMode: "user" // Default to front camera
+    },
+    // Enhanced decode performance
+    decodeBarCodeOnFrame: true
   };
 
   try {
-    statusEl.textContent = "📷 Starting camera...";
-    const cameras = await Html5Qrcode.getCameras();
-    const backCamera = cameras.find(c => c.facingMode === "environment") || cameras[0];
+    statusEl.textContent = "📷 Starting front camera...";
+    
+    // First scan always uses front camera
+    const frontCamera = availableCameras.find(c => c.facingMode === "user") || availableCameras[0];
+    currentCameraId = frontCamera ? frontCamera.id : { facingMode: "user" };
     
     await qrScanner.start(
-      backCamera ? backCamera.id : { facingMode: "environment" },
+      currentCameraId,
       config,
       qrSuccess,
       qrErrorCallback,
       qrStatusCallback
     );
     statusEl.textContent = "✅ Ready! Point QR code at scanner";
+    updateCameraSelector();
   } catch(err) {
     console.error("QR Scanner Error:", err);
     statusEl.textContent = "❌ Camera failed to start";
     showMessage("err", "Camera Error", "Please check camera permission and lighting");
     setTimeout(cancelQRScanner, 2000);
   }
+}
+
+function populateCameraSelector() {
+  const selector = document.getElementById("qr-camera-selector");
+  selector.innerHTML = "";
+  
+  availableCameras.forEach((camera, index) => {
+    const btn = document.createElement("button");
+    btn.textContent = camera.label || `Camera ${index + 1}`;
+    btn.dataset.cameraId = camera.id;
+    btn.onclick = () => selectCamera(camera.id);
+    selector.appendChild(btn);
+  });
+}
+
+function updateCameraSelector() {
+  const buttons = document.querySelectorAll("#qr-camera-selector button");
+  buttons.forEach(btn => {
+    btn.classList.remove("active");
+    if (btn.dataset.cameraId === currentCameraId) {
+      btn.classList.add("active");
+    }
+  });
+}
+
+async function selectCamera(cameraId) {
+  if (qrScanner && currentCameraId !== cameraId) {
+    try {
+      document.getElementById("qr-status").textContent = "🔄 Switching camera...";
+      await qrScanner.stop();
+      currentCameraId = cameraId;
+      await qrScanner.start(
+        currentCameraId,
+        getScannerConfig(),
+        qrSuccess,
+        qrErrorCallback,
+        qrStatusCallback
+      );
+      document.getElementById("qr-status").textContent = "✅ Camera switched!";
+      updateCameraSelector();
+    } catch(err) {
+      console.error("Camera switch error:", err);
+      document.getElementById("qr-status").textContent = "❌ Switch failed";
+    }
+  }
+}
+
+async function switchCamera() {
+  const cameras = availableCameras;
+  const currentIndex = cameras.findIndex(c => c.id === currentCameraId);
+  const nextIndex = (currentIndex + 1) % cameras.length;
+  await selectCamera(cameras[nextIndex].id);
+}
+
+function getScannerConfig() {
+  return {
+    fps: 25,
+    qrbox: { width: 400, height: 400 },
+    aspectRatio: 1.0,
+    disableFlip: false,
+    videoConstraints: {
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    }
+  };
 }
 
 function qrStatusCallback(decodedText, decodedResult) {
@@ -313,11 +453,15 @@ function cancelQRScanner(){
     qrScanner.stop().then(() => {
       const overlay=document.getElementById("qr-overlay");
       if(overlay) overlay.remove();
+      qrScanner.clear(); // Clear scanner cache
     }).catch(console.error);
   } else {
     const overlay=document.getElementById("qr-overlay");
     if(overlay) overlay.remove();
   }
+  availableCameras = [];
+  currentCameraId = null;
+  isFirstScan = true;
 }
 
 function qrSuccess(decodedText){
@@ -331,10 +475,13 @@ function qrSuccess(decodedText){
     
     // Auto close scanner after success
     setTimeout(() => {
-      if(qrScanner) qrScanner.stop();
+      if(qrScanner) {
+        qrScanner.stop();
+        qrScanner.clear();
+      }
       const overlay=document.getElementById("qr-overlay");
       if(overlay) overlay.remove();
-    }, 500);
+    }, 800);
     
   }catch(e){
     showMessage("err","Invalid QR Format","QR doesn't contain beneficiary data");
@@ -421,6 +568,13 @@ window.addEventListener('beforeunload', (e) => {
     return 'QR scanner is active. Are you sure?';
   }
 });
+
+// Touch optimization for mobile
+document.addEventListener('touchstart', function(event) {
+  if (document.getElementById('qr-overlay')) {
+    event.preventDefault();
+  }
+}, { passive: false });
 </script>
 
 </body>
