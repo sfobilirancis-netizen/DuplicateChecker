@@ -3,42 +3,203 @@
 <head>
 <base target="_top" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+
 <title>Duplicate Checker</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
+<style>
+
+:root{
+--blue:#0038A8;
+--blue2:#0b4bd6;
+--red:#CE1126;
+--yellow:#FCD116;
+
+--bg:#f4f6fb;
+--card:#ffffff;
+--text:#0b1220;
+--muted:#475569;
+--border:#e2e8f0;
+--shadow:0 10px 28px rgba(2,6,23,0.10);
+--radius:14px;
+}
+
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:Arial,Helvetica,sans-serif;
+background:var(--bg);
+color:var(--text);
+}
+
+.container{
+max-width:1120px;
+margin:auto;
+padding:16px;
+}
+
+header{
+background:#fff;
+border-bottom:4px solid var(--blue);
+}
+
+.headerTop{
+background:linear-gradient(90deg,var(--blue),var(--blue2));
+color:#fff;
+padding:12px 0;
+text-align:center;
+}
+
+.titles .rp{
+font-size:12px;
+}
+
+.titles .dept{
+font-size:20px;
+font-weight:800;
+}
+
+.titles .unit{
+font-size:14px;
+}
+
+.ribbon{
+height:6px;
+background:linear-gradient(90deg,var(--blue) 0 33%,var(--red) 33% 66%,var(--yellow) 66% 100%);
+}
+
+.card{
+margin-top:16px;
+background:var(--card);
+border:1px solid var(--border);
+border-radius:var(--radius);
+box-shadow:var(--shadow);
+}
+
+.cardHeader{
+padding:14px 16px;
+border-bottom:1px solid var(--border);
+background:#fbfdff;
+}
+
+.cardBody{
+padding:16px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr;
+gap:12px;
+}
+
+@media(min-width:720px){
+.grid{grid-template-columns:repeat(2,1fr)}
+}
+
+@media(min-width:1024px){
+.grid{grid-template-columns:repeat(4,1fr)}
+.span2{grid-column:span 2}
+}
+
+label{
+font-size:12px;
+color:var(--muted);
+display:block;
+margin-bottom:6px;
+}
+
+input,select{
+width:100%;
+padding:11px 12px;
+border-radius:12px;
+border:1px solid var(--border);
+font-size:14px;
+}
+
+.actions{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+}
+
+button{
+border:1px solid var(--border);
+padding:10px 14px;
+border-radius:12px;
+font-weight:700;
+cursor:pointer;
+}
+
+.btnPrimary{
+background:linear-gradient(135deg,var(--blue),var(--blue2));
+color:#fff;
+}
+
+.msg{
+margin-top:14px;
+padding:12px 14px;
+border-radius:12px;
+border:1px solid var(--border);
+display:flex;
+gap:10px;
+}
+
+.msg.ok{background:#f0fdf4;border-color:#bbf7d0}
+.msg.err{background:#fef2f2;border-color:#fecaca}
+
+#qr-reader{
+margin-top:15px;
+}
+
+</style>
 </head>
 
 <body>
 
 <header>
-<h1>Department of Social Welfare and Development</h1>
-<h2>Duplicate Checker</h2>
+<div class="headerTop">
+<div class="container">
+<div class="titles">
+<div class="rp">Republic of the Philippines</div>
+<div class="dept">Department of Social Welfare and Development</div>
+<div class="unit">Duplicate Checker</div>
+</div>
+</div>
+</div>
+<div class="ribbon"></div>
 </header>
 
-<main>
+<main class="container">
 
-<h3>Beneficiary Duplicate Validation</h3>
+<div class="card">
 
-<form id="searchForm">
+<div class="cardHeader">
+<strong>Beneficiary Duplicate Validation</strong>
+</div>
+
+<div class="cardBody">
+
+<div class="grid">
 
 <div>
-<label>Last Name:</label>
-<input id="lastName" type="text" placeholder="Enter last name">
+<label>Beneficiary's Last Name</label>
+<input id="lastName" type="text">
 </div>
 
 <div>
-<label>First Name:</label>
-<input id="firstName" type="text" placeholder="Enter first name">
+<label>Beneficiary's First Name</label>
+<input id="firstName" type="text">
 </div>
 
 <div>
-<label>Extension Name:</label>
-<input id="extName" type="text" placeholder="JR, SR, etc.">
+<label>Beneficiary's Extension</label>
+<input id="extName" type="text">
 </div>
 
 <div>
-<label>Type of Assistance:</label>
+<label>Type of Assistance</label>
 <select id="assistanceType">
 <option value="">Select type</option>
 <option value="Cash Relief Assistance">Cash Relief Assistance</option>
@@ -50,16 +211,27 @@
 </select>
 </div>
 
-<button type="button" onclick="startQRScanner()">Scan QR</button>
-<button type="button" onclick="checkDuplicate()">Check Duplicate</button>
-<button type="button" onclick="resetForm()">Reset</button>
+<div class="span2">
+<label>Actions</label>
+<div class="actions">
 
-</form>
+<button class="btnPrimary" onclick="startQRScanner()">Scan QR</button>
+
+<button onclick="checkDuplicate()">Check Duplicate</button>
+
+<button onclick="resetForm()">Reset</button>
+
+</div>
+</div>
+
+</div>
 
 <div id="qr-reader"></div>
 
 <div id="message"></div>
 
+</div>
+</div>
 </main>
 
 <script>
@@ -68,30 +240,30 @@ let qrScanner;
 
 async function startQRScanner(){
 
-const qrContainer = document.getElementById("qr-reader");
-qrContainer.innerHTML = "";
-document.getElementById("message").innerHTML = "";
+const qrContainer=document.getElementById("qr-reader");
+qrContainer.innerHTML="";
+showMessage("","");
 
 try{
 
-qrScanner = new Html5Qrcode("qr-reader");
+qrScanner=new Html5Qrcode("qr-reader");
 
 await qrScanner.start(
-{ facingMode: "environment" },
-{ fps: 10, qrbox: 250 },
+{facingMode:"environment"},
+{fps:10,qrbox:250},
 qrSuccess
 );
 
 }catch(error){
 
 if(error.message.includes("Permission")){
-showMessage("Camera permission denied. Please allow camera access.");
+showMessage("err","Camera permission denied. Please allow camera access.");
 }
 else if(error.message.includes("NotFound")){
-showMessage("No camera found on this device.");
+showMessage("err","No camera found on this device.");
 }
 else{
-showMessage("Scanner failed to start. Make sure camera is available and the site uses HTTPS.");
+showMessage("err","Scanner failed to start. Use HTTPS and allow camera.");
 }
 
 }
@@ -102,38 +274,38 @@ function qrSuccess(decodedText){
 
 try{
 
-const data = JSON.parse(decodedText);
+const data=JSON.parse(decodedText);
 
 if(data.subject){
 
-document.getElementById("lastName").value = data.subject.lName || "";
-document.getElementById("firstName").value = data.subject.fName || "";
-document.getElementById("extName").value = data.subject.Suffix || "";
+document.getElementById("lastName").value=data.subject.lName||"";
+document.getElementById("firstName").value=data.subject.fName||"";
+document.getElementById("extName").value=data.subject.Suffix||"";
 
 qrScanner.stop();
-document.getElementById("qr-reader").innerHTML = "";
+document.getElementById("qr-reader").innerHTML="";
 
 }
 
 }catch(e){
 
-showMessage("Invalid QR format");
+showMessage("err","Invalid QR format");
 
 }
 
 }
 
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv';
+const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRdWgtp7QemefsPk4fCle7BY7DO9E068Q3NlmUWdGzRwkzEfwxBj9-srMN_cBTpGOwkRb6TdgjVsKJq/pub?gid=2133064879&single=true&output=csv';
 
-let cachedData = null;
+let cachedData=null;
 
 async function fetchData(){
 
 if(cachedData) return cachedData;
 
-const response = await fetch(CSV_URL);
-const csvText = await response.text();
-cachedData = parseCSV(csvText);
+const response=await fetch(CSV_URL);
+const csvText=await response.text();
+cachedData=parseCSV(csvText);
 
 return cachedData;
 
@@ -141,19 +313,16 @@ return cachedData;
 
 function parseCSV(csvText){
 
-const lines = csvText.trim().split('\n').slice(1);
+const lines=csvText.trim().split('\n').slice(1);
 
-return lines.map((line,index)=>{
+return lines.map(line=>{
 
-const cols = line.split(",");
+const cols=line.split(",");
 
 return{
-date:cols[0],
 lastName:cols[1],
 firstName:cols[2],
-extName:cols[3],
-assistanceType:cols[4],
-rowNumber:index+2
+assistanceType:cols[4]
 }
 
 });
@@ -162,47 +331,53 @@ rowNumber:index+2
 
 async function checkDuplicate(){
 
-const payload = getPayload();
+const last=document.getElementById("lastName").value.trim().toLowerCase();
+const first=document.getElementById("firstName").value.trim().toLowerCase();
+const type=document.getElementById("assistanceType").value.trim().toLowerCase();
 
-if (!payload.lastName || !payload.firstName || !payload.assistanceType) {
-showMessage('Please fill required fields');
+if(!last||!first||!type){
+showMessage("err","Please fill required fields");
 return;
 }
 
-const data = await fetchData();
+const data=await fetchData();
 
-const matches = data.filter(row =>
-row.lastName.toLowerCase().trim() === payload.lastName.toLowerCase().trim() &&
-row.firstName.toLowerCase().trim() === payload.firstName.toLowerCase().trim() &&
-row.assistanceType.toLowerCase().trim() === payload.assistanceType.toLowerCase().trim()
+const match=data.find(r=>
+r.lastName.toLowerCase()==last &&
+r.firstName.toLowerCase()==first &&
+r.assistanceType.toLowerCase()==type
 );
 
-if(matches.length>0){
-showMessage("DUPLICATE FOUND");
+if(match){
+showMessage("err","Duplicate Found");
 }else{
-showMessage("NO DUPLICATE FOUND");
+showMessage("ok","No Duplicate Found");
 }
 
 }
 
-function getPayload(){
+function showMessage(type,msg){
 
-return{
-lastName:document.getElementById("lastName").value,
-firstName:document.getElementById("firstName").value,
-extName:document.getElementById("extName").value,
-assistanceType:document.getElementById("assistanceType").value
+if(!msg){
+document.getElementById("message").innerHTML="";
+return;
 }
 
-}
+const cls=type==="err"?"msg err":"msg ok";
 
-function showMessage(msg){
-document.getElementById("message").innerHTML = msg;
+document.getElementById("message").innerHTML=
+`<div class="${cls}">${msg}</div>`;
+
 }
 
 function resetForm(){
-document.getElementById("searchForm").reset();
-document.getElementById("message").innerHTML="";
+
+document.getElementById("lastName").value="";
+document.getElementById("firstName").value="";
+document.getElementById("extName").value="";
+document.getElementById("assistanceType").value="";
+showMessage("","");
+
 }
 
 </script>
